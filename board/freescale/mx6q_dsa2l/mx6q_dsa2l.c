@@ -375,16 +375,25 @@ static void setup_uart(void)
 	mxc_iomux_v3_setup_pad(MX6Q_PAD_CSI0_DAT11__UART1_RXD);
 #elif defined CONFIG_MX6DL
 	/* UART1 TXD */
-	mxc_iomux_v3_setup_pad(MX6DL_PAD_CSI0_DAT10__UART1_TXD);
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_SD3_DAT7__UART1_TXD);
 
 	/* UART1 RXD */
-	mxc_iomux_v3_setup_pad(MX6DL_PAD_CSI0_DAT11__UART1_RXD);
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_SD3_DAT6__UART1_RXD);
+
+	#if defined CONFIG_MX6DL_DSA2L
+	/* UART2 TXD */
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_SD3_DAT5__UART2_TXD);
+
+	/* UART2 RXD */
+	mxc_iomux_v3_setup_pad(MX6DL_PAD_SD3_DAT4__UART2_RXD);
+	#endif
 #endif
 }
 
 #ifdef CONFIG_VIDEO_MX5
 void setup_lvds_poweron(void)
 {
+#ifndef CONFIG_MX6DL_DSA2L
 	int reg;
 	/* AUX_5V_EN: GPIO(6, 10) */
 #ifdef CONFIG_MX6DL
@@ -400,6 +409,7 @@ void setup_lvds_poweron(void)
 	reg = readl(GPIO6_BASE_ADDR + GPIO_DR);
 	reg |= (1 << 10);
 	writel(reg, GPIO6_BASE_ADDR + GPIO_DR);
+#endif
 }
 #endif
 
@@ -410,7 +420,8 @@ void setup_lvds_poweron(void)
 #define I2C2_SDA_GPIO4_13_BIT_MASK  (1 << 13)
 #define I2C3_SCL_GPIO1_3_BIT_MASK   (1 << 3)
 #define I2C3_SDA_GPIO1_6_BIT_MASK   (1 << 6)
-
+#define I2C4_SCL_GPIO1_7_BIT_MASK	 (1 << 7)
+#define I2C4_SDA_GPIO1_8_BIT_MASK   (1 << 8)
 
 static void setup_i2c(unsigned int module_base)
 {
@@ -477,6 +488,27 @@ static void setup_i2c(unsigned int module_base)
 		writel(reg, CCM_BASE_ADDR + CLKCTL_CCGR2);
 
 		break;
+
+	case I2C4_BASE_ADDR:
+#if defined CONFIG_MX6Q
+		/* GPIO_7 for I2C3_SCL */
+		mxc_iomux_v3_setup_pad(MX6Q_PAD_GPIO_7__I2C4_SCL);
+		/* GPIO_8 for I2C3_SDA */
+		mxc_iomux_v3_setup_pad(MX6Q_PAD_GPIO_8__I2C4_SDA);
+
+#elif defined CONFIG_MX6DL
+		/* GPIO_7 for I2C3_SCL */
+		mxc_iomux_v3_setup_pad(MX6DL_PAD_GPIO_7__I2C4_SCL);
+		/* GPIO_8 for I2C3_SDA */
+		mxc_iomux_v3_setup_pad(MX6DL_PAD_GPIO_8__I2C4_SDA);
+#endif
+		/* Enable i2c clock */
+		reg = readl(CCM_BASE_ADDR + CLKCTL_CCGR1);
+		reg |= 0x300;
+		writel(reg, CCM_BASE_ADDR + CLKCTL_CCGR1);
+
+		break;
+
 	default:
 		printf("Invalid I2C base: 0x%x\n", module_base);
 		break;
@@ -527,6 +559,19 @@ static void mx6q_i2c_gpio_scl_direction(int bus, int output)
 			reg &= I2C3_SCL_GPIO1_3_BIT_MASK;
 		writel(reg, GPIO1_BASE_ADDR + GPIO_GDIR);
 		break;
+	case 4:
+#if defined CONFIG_MX6Q
+		mxc_iomux_v3_setup_pad(MX6Q_PAD_GPIO_7__GPIO_1_7);
+#elif defined CONFIG_MX6DL
+		mxc_iomux_v3_setup_pad(MX6DL_PAD_GPIO_7__GPIO_1_7);
+#endif
+		reg = readl(GPIO1_BASE_ADDR + GPIO_GDIR);
+		if (output)
+			reg |= I2C4_SCL_GPIO1_7_BIT_MASK;
+		else
+			reg &= I2C4_SCL_GPIO1_7_BIT_MASK;
+		writel(reg, GPIO1_BASE_ADDR + GPIO_GDIR);
+		break;
 	}
 }
 
@@ -573,6 +618,18 @@ static void mx6q_i2c_gpio_sda_direction(int bus, int output)
 		else
 			reg &= ~I2C3_SDA_GPIO1_6_BIT_MASK;
 		writel(reg, GPIO1_BASE_ADDR + GPIO_GDIR);
+	case 4:
+#if defined CONFIG_MX6Q
+		mxc_iomux_v3_setup_pad(MX6Q_PAD_GPIO_8__GPIO_1_8);
+#elif defined CONFIG_MX6DL
+		mxc_iomux_v3_setup_pad(MX6DL_PAD_GPIO_8__GPIO_1_8);
+#endif
+		reg = readl(GPIO1_BASE_ADDR + GPIO_GDIR);
+		if (output)
+			reg |= I2C4_SDA_GPIO1_8_BIT_MASK;
+		else
+			reg &= ~I2C4_SDA_GPIO1_8_BIT_MASK;
+		writel(reg, GPIO1_BASE_ADDR + GPIO_GDIR);
 	default:
 		break;
 	}
@@ -608,6 +665,14 @@ static void mx6q_i2c_gpio_scl_set_level(int bus, int high)
 			reg &= ~I2C3_SCL_GPIO1_3_BIT_MASK;
 		writel(reg, GPIO1_BASE_ADDR + GPIO_DR);
 		break;
+	case 4:
+		reg = readl(GPIO1_BASE_ADDR + GPIO_DR);
+		if (high)
+			reg |= I2C4_SCL_GPIO1_7_BIT_MASK;
+		else
+			reg &= ~I2C4_SCL_GPIO1_7_BIT_MASK;
+		writel(reg, GPIO1_BASE_ADDR + GPIO_DR);
+		break;
 	}
 }
 
@@ -641,6 +706,14 @@ static void mx6q_i2c_gpio_sda_set_level(int bus, int high)
 			reg &= ~I2C3_SDA_GPIO1_6_BIT_MASK;
 		writel(reg, GPIO1_BASE_ADDR + GPIO_DR);
 		break;
+	case 4:
+		reg = readl(GPIO1_BASE_ADDR + GPIO_DR);
+		if (high)
+			reg |= I2C4_SDA_GPIO1_8_BIT_MASK;
+		else
+			reg &= ~I2C4_SDA_GPIO1_8_BIT_MASK;
+		writel(reg, GPIO1_BASE_ADDR + GPIO_DR);
+		break;
 	}
 }
 
@@ -661,6 +734,10 @@ static int mx6q_i2c_gpio_check_sda(int bus)
 	case 3:
 		reg = readl(GPIO1_BASE_ADDR + GPIO_PSR);
 		result = !!(reg & I2C3_SDA_GPIO1_6_BIT_MASK);
+		break;
+	case 4:
+		reg = readl(GPIO1_BASE_ADDR + GPIO_PSR);
+		result = !!(reg & I2C4_SDA_GPIO1_8_BIT_MASK);
 		break;
 	}
 
@@ -684,7 +761,7 @@ int i2c_bus_recovery(void)
 {
 	int i, bus, result = 0;
 
-	for (bus = 1; bus <= 3; bus++) {
+	for (bus = 1; bus <= 4; bus++) {
 		mx6q_i2c_gpio_sda_direction(bus, 0);
 
 		if (mx6q_i2c_gpio_check_sda(bus) == 0) {
@@ -739,6 +816,9 @@ int i2c_bus_recovery(void)
 		case 3:
 			setup_i2c(I2C3_BASE_ADDR);
 			break;
+		case 4:
+			setup_i2c(I2C4_BASE_ADDR);
+			break;
 		}
 	}
 
@@ -748,6 +828,7 @@ int i2c_bus_recovery(void)
 
 static int setup_pmic_voltages(void)
 {
+#if CONFIG_MX6_INTER_LDO_BYPASS
 	unsigned char value, rev_id = 0 ;
 	i2c_init(CONFIG_SYS_I2C_SPEED, CONFIG_SYS_I2C_SLAVE);
 	if (!i2c_probe(0x8)) {
@@ -788,6 +869,27 @@ static int setup_pmic_voltages(void)
 			return -1;
 		}
 	}
+#else
+	unsigned int value;
+	// Init WM8326 PMIC
+	i2c_init(CONFIG_PMIC_I2C_SPEED, CONFIG_PMIC_I2C_SLAVE);
+	if (!i2c_probe(CONFIG_PMIC_I2C_SLAVE)) {
+		// Get parent die ID
+		i2c_write(CONFIG_PMIC_I2C_SLAVE, 0x4000, 2, (u8*)&value, 2);
+		if (value != 0x6246) {
+			printf("WM8326 PMIC not found ! - 0x%x", value);
+			return -1;
+		}
+
+		// TODO: PMIC init
+		return 0;
+	}
+#endif
+}
+
+static int setup_ch7036(void) {
+	// TODO:
+	return 0;
 }
 #endif
 
@@ -933,12 +1035,21 @@ int board_eth_init(bd_t *bis)
  * that is required for UHS-I mode of operation.
  * Last element in struct is used to indicate 1.8V support.
  */
+#if !defined CONFIG_MX6DL_DSA2L
 struct fsl_esdhc_cfg usdhc_cfg[4] = {
 	{USDHC1_BASE_ADDR, 1, 1, 1, 0},
 	{USDHC2_BASE_ADDR, 1, 1, 1, 0},
 	{USDHC3_BASE_ADDR, 1, 1, 1, 0},
 	{USDHC4_BASE_ADDR, 1, 1, 1, 0},
 };
+#else
+struct fsl_esdhc_cfg usdhc_cfg[4] = {
+	{USDHC1_BASE_ADDR, 1, 0, 1, 0},
+	{USDHC2_BASE_ADDR, 1, 1, 1, 1},
+	{USDHC3_BASE_ADDR, 1, 0, 1, 0},
+	{USDHC4_BASE_ADDR, 1, 1, 1, 0},
+};
+#endif
 
 #if defined CONFIG_MX6Q
 iomux_v3_cfg_t usdhc1_pads[] = {
@@ -1038,21 +1149,25 @@ int usdhc_gpio_init(bd_t *bis)
 	for (index = 0; index < CONFIG_SYS_FSL_USDHC_NUM;
 		++index) {
 		switch (index) {
+#if !defined CONFIG_MX6DL_DSA2L
 		case 0:
 			mxc_iomux_v3_setup_multiple_pads(usdhc1_pads,
 				sizeof(usdhc1_pads) /
 				sizeof(usdhc1_pads[0]));
 			break;
+#endif
 		case 1:
 			mxc_iomux_v3_setup_multiple_pads(usdhc2_pads,
 				sizeof(usdhc2_pads) /
 				sizeof(usdhc2_pads[0]));
 			break;
+#if !defined CONFIG_MX6DL_DSA2L
 		case 2:
 			mxc_iomux_v3_setup_multiple_pads(usdhc3_pads,
 				sizeof(usdhc3_pads) /
 				sizeof(usdhc3_pads[0]));
 			break;
+#endif
 		case 3:
 			mxc_iomux_v3_setup_multiple_pads(usdhc4_pads,
 				sizeof(usdhc4_pads) /
@@ -1438,12 +1553,14 @@ void lcd_enable(void)
 	/* LVDS panel CABC_EN1 */
 	mxc_iomux_v3_setup_pad(MX6Q_PAD_NANDF_CS3__GPIO_6_16);
 #elif defined CONFIG_MX6DL
+	#if !defined CONFIG_MX6DL_DSA2L
 	/* PWM backlight */
 	mxc_iomux_v3_setup_pad(MX6DL_PAD_SD1_DAT3__PWM1_PWMO);
 	/* LVDS panel CABC_EN0 */
 	mxc_iomux_v3_setup_pad(MX6DL_PAD_NANDF_CS2__GPIO_6_15);
 	/* LVDS panel CABC_EN1 */
 	mxc_iomux_v3_setup_pad(MX6DL_PAD_NANDF_CS3__GPIO_6_16);
+	#endif
 #endif
 	/*
 	 * Set LVDS panel CABC_EN0 to low to disable
@@ -1452,6 +1569,7 @@ void lcd_enable(void)
 	 * simply disable it to get rid of annoying unstable
 	 * backlight phenomena.
 	 */
+#if !defined CONFIG_MX6DL_DSA2L
 	reg = readl(GPIO6_BASE_ADDR + GPIO_GDIR);
 	reg |= (1 << 15);
 	writel(reg, GPIO6_BASE_ADDR + GPIO_GDIR);
@@ -1471,6 +1589,7 @@ void lcd_enable(void)
 	reg = readl(GPIO6_BASE_ADDR + GPIO_DR);
 	reg &= ~(1 << 16);
 	writel(reg, GPIO6_BASE_ADDR + GPIO_DR);
+#endif
 
 	/* Disable ipu1_clk/ipu1_di_clk_x/ldb_dix_clk. */
 	reg = readl(CCM_BASE_ADDR + CLKCTL_CCGR3);
@@ -1839,10 +1958,21 @@ int board_late_init(void)
 #endif
 #ifdef CONFIG_I2C_MXC
 	setup_i2c(CONFIG_SYS_I2C_PORT);
+	setup_i2c(CONFIG_AUD_I2C_PORT);
+	setup_i2c(CONFIG_CH7036_I2C_PORT);
+	setup_i2c(CONFIG_PMIC_I2C_PORT);
 	i2c_bus_recovery();
-	ret = setup_pmic_voltages();
-	if (ret)
+
+	// TODO: CH7036 init and PMIC init or WM codec init
+	if (setup_pmic_voltages()) {
+		printf("PMIC Init failed");
 		return -1;
+	}
+
+	if (setup_ch7036()) {
+		printf("CH7036 Init failed");
+		return -1;
+	}
 #endif
 	return 0;
 }
