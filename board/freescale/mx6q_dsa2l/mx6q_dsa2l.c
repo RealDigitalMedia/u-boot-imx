@@ -87,6 +87,8 @@
 #include <ahci.h>
 #endif
 
+#include "ch7036.h"
+
 DECLARE_GLOBAL_DATA_PTR;
 
 static enum boot_device boot_dev;
@@ -94,6 +96,8 @@ static enum boot_device boot_dev;
 #define GPIO_VOL_DN_KEY IMX_GPIO_NR(4, 15)
 #define USB_OTG_PWR IMX_GPIO_NR(3, 22)
 #define USB_H1_POWER IMX_GPIO_NR(1, 29)
+
+#define VGA_PORT_STATUS IMX_GPIO_NR(7, 7)
 
 extern int sata_curr_device;
 
@@ -887,8 +891,151 @@ static int setup_pmic_voltages(void)
 #endif
 }
 
+void CalculateINCs(void) {
+    unsigned int hinca, hincb, hinc;
+    unsigned int vinca, vincb, vinc;
+    unsigned int hdinca, hdincb, hdinc;
+    unsigned char value;
+
+    //read parameters
+	value = 0x4;
+	i2c_write(CH7036_ADDR, 0x3, 1, &value, 1);	//i2cWrite(reg, value), switch page
+
+	i2c_read(CH7036_ADDR, 0x2A, 1, &value, 1);
+	hinca = (unsigned int)value << 3;
+	i2c_read(CH7036_ADDR, 0x2B, 1, &value, 1);
+	hinca |= value;
+
+	i2c_read(CH7036_ADDR, 0x2C, 1, &value, 1);
+	hincb = (unsigned int)value << 3;
+	i2c_read(CH7036_ADDR, 0x2D, 1, &value, 1);
+	hincb |= value;
+
+	i2c_read(CH7036_ADDR, 0x2E, 1, &value, 1);
+	vinca = (unsigned int)value << 3;
+	i2c_read(CH7036_ADDR, 0x2F, 1, &value, 1);
+	vinca |= value;
+
+	i2c_read(CH7036_ADDR, 0x30, 1, &value, 1);
+	vincb = (unsigned int)value << 3;
+	i2c_read(CH7036_ADDR, 0x31, 1, &value, 1);
+	vincb |= value;
+
+	i2c_read(CH7036_ADDR, 0x32, 1, &value, 1);
+	hdinca = (unsigned int)value << 3;
+	i2c_read(CH7036_ADDR, 0x33, 1, &value, 1);
+	hdinca |= value;
+
+	i2c_read(CH7036_ADDR, 0x34, 1, &value, 1);
+	hdincb = (unsigned int)value << 3;
+	i2c_read(CH7036_ADDR, 0x35, 1, &value, 1);
+	hdincb |= value;
+
+    if(hinca == 0 || hincb == 0)
+        hinc = 0;
+    else
+        hinc = (1 << 20) * hinca / hincb;
+
+    if(vinca == 0 || vincb == 0)
+        vinc = 0;
+    else
+        vinc = (1 << 20) * vinca / vincb;
+
+    if(hdinca == 0 || hdincb == 0)
+        hdinc = 0;
+    else
+        hdinc = (1 << 20) * hdinca / hdincb;
+
+	value = (hinc>>16)&0xFF;
+	i2c_write(CH7036_ADDR, 0x36, 1, &value, 1);
+
+	value = (hinc>>8)&0xFF;
+	i2c_write(CH7036_ADDR, 0x37, 1, &value, 1);
+
+	value = hinc&0xFF;
+	i2c_write(CH7036_ADDR, 0x38, 1, &value, 1);
+
+	value = (vinc >>16)&0xFF;
+	i2c_write(CH7036_ADDR, 0x39, 1, &value, 1);
+
+	value = (vinc >>8)&0xFF;
+	i2c_write(CH7036_ADDR, 0x3A, 1, &value, 1);
+
+	value = vinc &0xFF;
+	i2c_write(CH7036_ADDR, 0x3B, 1, &value, 1);
+
+	value = (hdinc >>16)&0xFF;
+	i2c_write(CH7036_ADDR, 0x3C, 1, &value, 1);
+
+	value = (hdinc >>8)&0xFF;
+	i2c_write(CH7036_ADDR, 0x3D, 1, &value, 1);
+
+	value = hdinc &0xFF;
+	i2c_write(CH7036_ADDR, 0x3E, 1, &value, 1);
+}
+
+void Display() {
+    unsigned char val_t, value;
+	value = 0x04;
+	i2c_write(CH7036_ADDR, 0x03, 1, &value, 1);
+	value = 0x2A;
+	i2c_write(CH7036_ADDR, 0x52, 1, &value, 1);
+	udelay(200000);	// delay 200ms
+	value = 0x2F;
+	i2c_write(CH7036_ADDR, 0x52, 1, &value, 1);
+    //start to run:
+	value = 0x00;
+	i2c_write(CH7036_ADDR, 0x03, 1, &value, 1);
+    if (CH7036_HDMI_OUTPUT ) {
+    	value = 0x04;
+    	i2c_write(CH7036_ADDR, 0x0A, 1, &value, 1);
+    }
+    else {
+    	value = 0x00;
+    	i2c_write(CH7036_ADDR, 0x0A, 1, &value, 1);
+    }
+}
+
 static int setup_ch7036(void) {
-	// TODO:
+    unsigned char *dP = &ch7036_dat[0], value;
+    int totalOutput, outputIndex, i;
+    OUTPUT_INFO *outputInfo;
+    REG_SETTING *regSetting;
+
+	// Init Ch7036 chipset
+    totalOutput = (int)*(dP+TOTAL_OUTPUT_NUMBER);
+//    printf("Total output = %d\n", TOTAL_OUTPUT_NUMBER);
+
+    // Check wether VGA port is attached or not.
+	mxc_iomux_v3_setup_pad(MX6X_IOMUX(PAD_SD3_DAT3__GPIO_7_7));
+	gpio_direction_input(VGA_PORT_STATUS);
+	if (gpio_get_value(VGA_PORT_STATUS) == 1) {
+		printf("VGA Monitor not attached!\n");
+		return -1;
+	}
+
+	// Detect external VGA type
+	// If VGA found, get VGA resolution
+	printf("VGA Monitor found!\n");
+    outputIndex = 1;
+
+	// Travel the table to get corresponding register setting
+    outputInfo = (OUTPUT_INFO *)(dP + TOTAL_OUTPUT_NUMBER + 1) + outputIndex;
+//    printf("Mode index = 0x%02x\n", outputInfo->modeIndex);
+//    printf("Reg Len = 0x%02x\n", outputInfo->len);
+//    printf("Reg Offset = 0x%04x\n", outputInfo->regOffset);
+
+    regSetting = (REG_SETTING *)(dP + outputInfo->regOffset);
+    for (i = 0 ; i < outputInfo->len ; i++) {
+    	// Fill register setting to Ch7036
+    	i2c_write(CH7036_ADDR, regSetting->regIndex, 1, &regSetting->regValue, 1);
+        regSetting++;
+    }
+
+    CalculateINCs();
+
+    Display();
+
 	return 0;
 }
 #endif
