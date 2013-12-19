@@ -899,36 +899,36 @@ void CalculateINCs(void) {
 
     //read parameters
 	value = 0x4;
-	i2c_write(CH7036_ADDR, 0x3, 1, &value, 1);	//i2cWrite(reg, value), switch page
+	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x3, 1, &value, 1);	//i2cWrite(reg, value), switch page
 
-	i2c_read(CH7036_ADDR, 0x2A, 1, &value, 1);
+	i2c_read(CONFIG_CH7036_I2C_SLAVE, 0x2A, 1, &value, 1);
 	hinca = (unsigned int)value << 3;
-	i2c_read(CH7036_ADDR, 0x2B, 1, &value, 1);
+	i2c_read(CONFIG_CH7036_I2C_SLAVE, 0x2B, 1, &value, 1);
 	hinca |= value;
 
-	i2c_read(CH7036_ADDR, 0x2C, 1, &value, 1);
+	i2c_read(CONFIG_CH7036_I2C_SLAVE, 0x2C, 1, &value, 1);
 	hincb = (unsigned int)value << 3;
-	i2c_read(CH7036_ADDR, 0x2D, 1, &value, 1);
+	i2c_read(CONFIG_CH7036_I2C_SLAVE, 0x2D, 1, &value, 1);
 	hincb |= value;
 
-	i2c_read(CH7036_ADDR, 0x2E, 1, &value, 1);
+	i2c_read(CONFIG_CH7036_I2C_SLAVE, 0x2E, 1, &value, 1);
 	vinca = (unsigned int)value << 3;
-	i2c_read(CH7036_ADDR, 0x2F, 1, &value, 1);
+	i2c_read(CONFIG_CH7036_I2C_SLAVE, 0x2F, 1, &value, 1);
 	vinca |= value;
 
-	i2c_read(CH7036_ADDR, 0x30, 1, &value, 1);
+	i2c_read(CONFIG_CH7036_I2C_SLAVE, 0x30, 1, &value, 1);
 	vincb = (unsigned int)value << 3;
-	i2c_read(CH7036_ADDR, 0x31, 1, &value, 1);
+	i2c_read(CONFIG_CH7036_I2C_SLAVE, 0x31, 1, &value, 1);
 	vincb |= value;
 
-	i2c_read(CH7036_ADDR, 0x32, 1, &value, 1);
+	i2c_read(CONFIG_CH7036_I2C_SLAVE, 0x32, 1, &value, 1);
 	hdinca = (unsigned int)value << 3;
-	i2c_read(CH7036_ADDR, 0x33, 1, &value, 1);
+	i2c_read(CONFIG_CH7036_I2C_SLAVE, 0x33, 1, &value, 1);
 	hdinca |= value;
 
-	i2c_read(CH7036_ADDR, 0x34, 1, &value, 1);
+	i2c_read(CONFIG_CH7036_I2C_SLAVE, 0x34, 1, &value, 1);
 	hdincb = (unsigned int)value << 3;
-	i2c_read(CH7036_ADDR, 0x35, 1, &value, 1);
+	i2c_read(CONFIG_CH7036_I2C_SLAVE, 0x35, 1, &value, 1);
 	hdincb |= value;
 
     if(hinca == 0 || hincb == 0)
@@ -947,52 +947,52 @@ void CalculateINCs(void) {
         hdinc = (1 << 20) * hdinca / hdincb;
 
 	value = (hinc>>16)&0xFF;
-	i2c_write(CH7036_ADDR, 0x36, 1, &value, 1);
+	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x36, 1, &value, 1);
 
 	value = (hinc>>8)&0xFF;
-	i2c_write(CH7036_ADDR, 0x37, 1, &value, 1);
+	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x37, 1, &value, 1);
 
 	value = hinc&0xFF;
-	i2c_write(CH7036_ADDR, 0x38, 1, &value, 1);
+	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x38, 1, &value, 1);
 
 	value = (vinc >>16)&0xFF;
-	i2c_write(CH7036_ADDR, 0x39, 1, &value, 1);
+	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x39, 1, &value, 1);
 
 	value = (vinc >>8)&0xFF;
-	i2c_write(CH7036_ADDR, 0x3A, 1, &value, 1);
+	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x3A, 1, &value, 1);
 
 	value = vinc &0xFF;
-	i2c_write(CH7036_ADDR, 0x3B, 1, &value, 1);
+	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x3B, 1, &value, 1);
 
 	value = (hdinc >>16)&0xFF;
-	i2c_write(CH7036_ADDR, 0x3C, 1, &value, 1);
+	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x3C, 1, &value, 1);
 
 	value = (hdinc >>8)&0xFF;
-	i2c_write(CH7036_ADDR, 0x3D, 1, &value, 1);
+	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x3D, 1, &value, 1);
 
 	value = hdinc &0xFF;
-	i2c_write(CH7036_ADDR, 0x3E, 1, &value, 1);
+	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x3E, 1, &value, 1);
 }
 
 void Display() {
     unsigned char val_t, value;
 	value = 0x04;
-	i2c_write(CH7036_ADDR, 0x03, 1, &value, 1);
+	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x03, 1, &value, 1);
 	value = 0x2A;
-	i2c_write(CH7036_ADDR, 0x52, 1, &value, 1);
+	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x52, 1, &value, 1);
 	udelay(200000);	// delay 200ms
 	value = 0x2F;
-	i2c_write(CH7036_ADDR, 0x52, 1, &value, 1);
+	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x52, 1, &value, 1);
     //start to run:
 	value = 0x00;
-	i2c_write(CH7036_ADDR, 0x03, 1, &value, 1);
+	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x03, 1, &value, 1);
     if (CH7036_HDMI_OUTPUT ) {
     	value = 0x04;
-    	i2c_write(CH7036_ADDR, 0x0A, 1, &value, 1);
+    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x0A, 1, &value, 1);
     }
     else {
     	value = 0x00;
-    	i2c_write(CH7036_ADDR, 0x0A, 1, &value, 1);
+    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x0A, 1, &value, 1);
     }
 }
 
@@ -1028,7 +1028,7 @@ static int setup_ch7036(void) {
     regSetting = (REG_SETTING *)(dP + outputInfo->regOffset);
     for (i = 0 ; i < outputInfo->len ; i++) {
     	// Fill register setting to Ch7036
-    	i2c_write(CH7036_ADDR, regSetting->regIndex, 1, &regSetting->regValue, 1);
+    	i2c_write(CONFIG_CH7036_I2C_SLAVE, regSetting->regIndex, 1, &regSetting->regValue, 1);
         regSetting++;
     }
 
