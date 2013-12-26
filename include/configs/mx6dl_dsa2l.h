@@ -207,11 +207,11 @@
 
 	#define CONFIG_CH7036_I2C_PORT			I2C3_BASE_ADDR
 	#define CONFIG_CH7036_I2C_SPEED        100000
-	#define CONFIG_CH7036_I2C_SLAVE        (0x76 << 1)
+	#define CONFIG_CH7036_I2C_SLAVE        (0x76 >> 1)
 
 	#define CONFIG_PMIC_I2C_PORT			I2C4_BASE_ADDR
 	#define CONFIG_PMIC_I2C_SPEED          100000
-	#define CONFIG_PMIC_I2C_SLAVE          0x68
+	#define CONFIG_PMIC_I2C_SLAVE          (0x68 >> 1)
 #endif
 
 /*

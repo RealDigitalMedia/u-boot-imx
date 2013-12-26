@@ -71,3 +71,7 @@ cscope.*
 .project
 /.settings/*
 /Debug/*
+
+#MAC system Files
+.DS_Store
+._.DS_Store
