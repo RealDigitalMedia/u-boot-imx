@@ -1203,11 +1203,9 @@ struct fsl_esdhc_cfg usdhc_cfg[4] = {
 };
 #else
 struct fsl_esdhc_cfg usdhc_cfg[4] = {
-//	{USDHC1_BASE_ADDR, 1, 0, 1, 0},
-//	{USDHC2_BASE_ADDR, 1, 1, 1, 1},
-//	{USDHC3_BASE_ADDR, 1, 0, 1, 0},
-//	{USDHC4_BASE_ADDR, 1, 1, 1, 0},
+		{USDHC1_BASE_ADDR, 1, 1, 1, 0},
 		{USDHC2_BASE_ADDR, 1, 1, 1, 0},
+		{USDHC3_BASE_ADDR, 1, 1, 1, 0},
 		{USDHC4_BASE_ADDR, 1, 1, 1, 0},
 };
 #endif
@@ -1310,12 +1308,12 @@ int usdhc_gpio_init(bd_t *bis)
 	for (index = 0; index < CONFIG_SYS_FSL_USDHC_NUM;
 		++index) {
 		switch (index) {
-#if !defined CONFIG_MX6DL_DSA2L
 		case 0:
+#if !defined CONFIG_MX6DL_DSA2L
 			mxc_iomux_v3_setup_multiple_pads(usdhc1_pads,
 				sizeof(usdhc1_pads) /
 				sizeof(usdhc1_pads[0]));
-//#endif
+#endif
 			break;
 		case 1:
 			mxc_iomux_v3_setup_multiple_pads(usdhc2_pads,
@@ -1323,24 +1321,13 @@ int usdhc_gpio_init(bd_t *bis)
 				sizeof(usdhc2_pads[0]));
 			break;
 		case 2:
-//#if !defined CONFIG_MX6DL_DSA2L
+#if !defined CONFIG_MX6DL_DSA2L
 			mxc_iomux_v3_setup_multiple_pads(usdhc3_pads,
 				sizeof(usdhc3_pads) /
 				sizeof(usdhc3_pads[0]));
-//#endif
+#endif
 			break;
 		case 3:
-			mxc_iomux_v3_setup_multiple_pads(usdhc4_pads,
-				sizeof(usdhc4_pads) /
-				sizeof(usdhc4_pads[0]));
-			break;
-#endif
-		case 0:
-			mxc_iomux_v3_setup_multiple_pads(usdhc2_pads,
-				sizeof(usdhc2_pads) /
-				sizeof(usdhc2_pads[0]));
-			break;
-		case 1:
 			mxc_iomux_v3_setup_multiple_pads(usdhc4_pads,
 				sizeof(usdhc4_pads) /
 				sizeof(usdhc4_pads[0]));
