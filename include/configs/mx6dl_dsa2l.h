@@ -197,7 +197,10 @@
 	#define CONFIG_MX6_INTER_LDO_BYPASS 0
 	#define CONFIG_HARD_I2C         1
 	#define CONFIG_I2C_MXC          1
-	#define CONFIG_SYS_I2C_PORT             I2C2_BASE_ADDR
+//	#define CONFIG_SYS_I2C_PORT             I2C2_BASE_ADDR
+//	#define CONFIG_SYS_I2C_SPEED            100000
+//	#define CONFIG_SYS_I2C_SLAVE            0x8
+	#define CONFIG_SYS_I2C_PORT             I2C3_BASE_ADDR
 	#define CONFIG_SYS_I2C_SPEED            100000
 	#define CONFIG_SYS_I2C_SLAVE            0x8
 
@@ -207,7 +210,7 @@
 
 	#define CONFIG_CH7036_I2C_PORT			I2C3_BASE_ADDR
 	#define CONFIG_CH7036_I2C_SPEED        100000
-	#define CONFIG_CH7036_I2C_SLAVE        (0x76 >> 1)
+	#define CONFIG_CH7036_I2C_SLAVE        0x76
 
 	#define CONFIG_PMIC_I2C_PORT			I2C4_BASE_ADDR
 	#define CONFIG_PMIC_I2C_SPEED          100000
@@ -240,7 +243,7 @@
 	#define CONFIG_MMC
 	#define CONFIG_GENERIC_MMC
 	#define CONFIG_IMX_MMC
-	#define CONFIG_SYS_FSL_USDHC_NUM        4
+	#define CONFIG_SYS_FSL_USDHC_NUM        2
 	#define CONFIG_SYS_FSL_ESDHC_ADDR       0
 	#define CONFIG_SYS_MMC_ENV_DEV  2
 	#define CONFIG_DOS_PARTITION	1

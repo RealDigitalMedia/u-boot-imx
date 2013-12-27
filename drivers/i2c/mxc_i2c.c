@@ -56,6 +56,7 @@
 #define I2C_TIMEOUT_TICKET	1
 
 #undef DEBUG
+//#define DEBUG
 
 #ifdef DEBUG
 #define DPRINTF(args...)  printf(args)

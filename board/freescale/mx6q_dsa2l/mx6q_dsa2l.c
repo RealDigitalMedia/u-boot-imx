@@ -488,7 +488,7 @@ static void setup_i2c(unsigned int module_base)
 #endif
 		/* Enable i2c clock */
 		reg = readl(CCM_BASE_ADDR + CLKCTL_CCGR2);
-		reg |= 0xC00;
+		reg |= 0x0C00;
 		writel(reg, CCM_BASE_ADDR + CLKCTL_CCGR2);
 
 		break;
@@ -876,15 +876,16 @@ static int setup_pmic_voltages(void)
 #else
 	unsigned int value;
 	// Init WM8326 PMIC
+	printf("WM8326 PMIC init !\n");
 	i2c_init(CONFIG_PMIC_I2C_SPEED, CONFIG_PMIC_I2C_SLAVE);
 	if (!i2c_probe(CONFIG_PMIC_I2C_SLAVE)) {
 		// Get parent die ID
 		i2c_write(CONFIG_PMIC_I2C_SLAVE, 0x4000, 2, (u8*)&value, 2);
-		if (value != 0x6246) {
-			printf("WM8326 PMIC not found ! - 0x%x", value);
+		if ((value&0x0FFFF) != 0x6246) {
+			printf("WM8326 PMIC not found ! - 0x%x\n", value);
 			return -1;
 		}
-
+		printf("WM8326 PMIC found ! - 0x%x\n", value);
 		// TODO: PMIC init
 		return 0;
 	}
@@ -1002,41 +1003,52 @@ static int setup_ch7036(void) {
     OUTPUT_INFO *outputInfo;
     REG_SETTING *regSetting;
 
-	// Init Ch7036 chipset
-    totalOutput = (int)*(dP+TOTAL_OUTPUT_NUMBER);
-//    printf("Total output = %d\n", TOTAL_OUTPUT_NUMBER);
+    // check ch7036
+    printf("Ch7036 Init !\n");
+    if (!i2c_probe(CONFIG_CH7036_I2C_SLAVE)) {
+    	// Init Ch7036 chipset
+    	printf("Ch7036 found and start initial !\n");
+    	totalOutput = (int)*(dP+TOTAL_OUTPUT_NUMBER);
+//    	printf("Total output = %d\n", TOTAL_OUTPUT_NUMBER);
 
-    // Check wether VGA port is attached or not.
-	mxc_iomux_v3_setup_pad(MX6X_IOMUX(PAD_SD3_DAT3__GPIO_7_7));
-	gpio_direction_input(VGA_PORT_STATUS);
-	if (gpio_get_value(VGA_PORT_STATUS) == 1) {
-		printf("VGA Monitor not attached!\n");
-		return -1;
-	}
+    	// Check wether VGA port is attached or not.
+//		mxc_iomux_v3_setup_pad(MX6X_IOMUX(PAD_SD3_DAT3__GPIO_7_7));
+//		gpio_direction_input(VGA_PORT_STATUS);
+//		if (gpio_get_value(VGA_PORT_STATUS) == 1) {
+//			printf("VGA Monitor not attached!\n");
+//			return -1;
+//		}
 
-	// Detect external VGA type
-	// If VGA found, get VGA resolution
-	printf("VGA Monitor found!\n");
-    outputIndex = 1;
+		// Detect external VGA type
+		// If VGA found, get VGA resolution
+		printf("VGA Monitor found!\n");
+    	outputIndex = 1;
 
-	// Travel the table to get corresponding register setting
-    outputInfo = (OUTPUT_INFO *)(dP + TOTAL_OUTPUT_NUMBER + 1) + outputIndex;
-//    printf("Mode index = 0x%02x\n", outputInfo->modeIndex);
-//    printf("Reg Len = 0x%02x\n", outputInfo->len);
-//    printf("Reg Offset = 0x%04x\n", outputInfo->regOffset);
+		// Travel the table to get corresponding register setting
+    	outputInfo = (OUTPUT_INFO *)(dP + TOTAL_OUTPUT_NUMBER + 1) + outputIndex;
+    	printf("Mode index = 0x%02x\n", outputInfo->modeIndex);
+    	printf("Reg Len = 0x%02x\n", outputInfo->len);
+    	printf("Reg Offset = 0x%04x\n", outputInfo->regOffset);
 
-    regSetting = (REG_SETTING *)(dP + outputInfo->regOffset);
-    for (i = 0 ; i < outputInfo->len ; i++) {
-    	// Fill register setting to Ch7036
-    	i2c_write(CONFIG_CH7036_I2C_SLAVE, regSetting->regIndex, 1, &regSetting->regValue, 1);
-        regSetting++;
+    	regSetting = (REG_SETTING *)(dP + outputInfo->regOffset);
+    	for (i = 0 ; i < outputInfo->len ; i++) {
+    		// Fill register setting to Ch7036
+        	printf("0x%02x:0x%02x ", regSetting->regIndex, regSetting->regValue);
+        	if (i!=0 && (i%7 == 0))
+        		printf("\n");
+    		i2c_write(CONFIG_CH7036_I2C_SLAVE, regSetting->regIndex, 1, &regSetting->regValue, 1);
+        	regSetting++;
+    	}
+
+    	CalculateINCs();
+
+    	Display();
+
+		return 0;
+    } else {
+    	printf("Ch7036 not found!\n");
+    	return 0;
     }
-
-    CalculateINCs();
-
-    Display();
-
-	return 0;
 }
 #endif
 
@@ -1191,10 +1203,12 @@ struct fsl_esdhc_cfg usdhc_cfg[4] = {
 };
 #else
 struct fsl_esdhc_cfg usdhc_cfg[4] = {
-	{USDHC1_BASE_ADDR, 1, 0, 1, 0},
-	{USDHC2_BASE_ADDR, 1, 1, 1, 1},
-	{USDHC3_BASE_ADDR, 1, 0, 1, 0},
-	{USDHC4_BASE_ADDR, 1, 1, 1, 0},
+//	{USDHC1_BASE_ADDR, 1, 0, 1, 0},
+//	{USDHC2_BASE_ADDR, 1, 1, 1, 1},
+//	{USDHC3_BASE_ADDR, 1, 0, 1, 0},
+//	{USDHC4_BASE_ADDR, 1, 1, 1, 0},
+		{USDHC2_BASE_ADDR, 1, 1, 1, 0},
+		{USDHC4_BASE_ADDR, 1, 1, 1, 0},
 };
 #endif
 
@@ -1301,21 +1315,32 @@ int usdhc_gpio_init(bd_t *bis)
 			mxc_iomux_v3_setup_multiple_pads(usdhc1_pads,
 				sizeof(usdhc1_pads) /
 				sizeof(usdhc1_pads[0]));
+//#endif
 			break;
-#endif
 		case 1:
 			mxc_iomux_v3_setup_multiple_pads(usdhc2_pads,
 				sizeof(usdhc2_pads) /
 				sizeof(usdhc2_pads[0]));
 			break;
-#if !defined CONFIG_MX6DL_DSA2L
 		case 2:
+//#if !defined CONFIG_MX6DL_DSA2L
 			mxc_iomux_v3_setup_multiple_pads(usdhc3_pads,
 				sizeof(usdhc3_pads) /
 				sizeof(usdhc3_pads[0]));
+//#endif
+			break;
+		case 3:
+			mxc_iomux_v3_setup_multiple_pads(usdhc4_pads,
+				sizeof(usdhc4_pads) /
+				sizeof(usdhc4_pads[0]));
 			break;
 #endif
-		case 3:
+		case 0:
+			mxc_iomux_v3_setup_multiple_pads(usdhc2_pads,
+				sizeof(usdhc2_pads) /
+				sizeof(usdhc2_pads[0]));
+			break;
+		case 1:
 			mxc_iomux_v3_setup_multiple_pads(usdhc4_pads,
 				sizeof(usdhc4_pads) /
 				sizeof(usdhc4_pads[0]));
@@ -2003,7 +2028,7 @@ void init_dsa2l_gpio(void) {
 	gpio_direction_output(IMX_GPIO_NR(7, 2), 0);	//Blue LED off
 	gpio_direction_output(IMX_GPIO_NR(7, 3), 1);	//Blue LED on
 	gpio_direction_output(IMX_GPIO_NR(7, 4), 1);	//WIFI disable
-	gpio_direction_output(IMX_GPIO_NR(7, 6), 0);	//CH7036 power up
+	gpio_direction_output(IMX_GPIO_NR(7, 6), 1);	//CH7036 power up
 	gpio_direction_output(IMX_GPIO_NR(1, 29), 1);	//no eMMC reset
 	gpio_direction_output(IMX_GPIO_NR(1, 1), 1);	//no reset CH7036
 	gpio_direction_output(IMX_GPIO_NR(1, 5), 1);	//no reset PMIC GPIO
@@ -2104,20 +2129,24 @@ int board_late_init(void)
 	}
 #endif
 #ifdef CONFIG_I2C_MXC
-	setup_i2c(CONFIG_SYS_I2C_PORT);
-	setup_i2c(CONFIG_AUD_I2C_PORT);
-	setup_i2c(CONFIG_CH7036_I2C_PORT);
-	setup_i2c(CONFIG_PMIC_I2C_PORT);
+//	setup_i2c(CONFIG_SYS_I2C_PORT);
+//	setup_i2c(CONFIG_AUD_I2C_PORT);
+//	setup_i2c(CONFIG_CH7036_I2C_PORT);
+//	setup_i2c(CONFIG_PMIC_I2C_PORT);
+	setup_i2c(I2C3_BASE_ADDR);
 	i2c_bus_recovery();
 
 	// TODO: CH7036 init and PMIC init or WM codec init
-	if (setup_pmic_voltages()) {
-		printf("PMIC Init failed");
-		return -1;
-	}
+//	if (setup_pmic_voltages()) {
+//		printf("PMIC Init failed\n");
+//		return -1;
+//	}
+
+//	setup_i2c(I2C3_BASE_ADDR);
+//	i2c_bus_recovery();
 
 	if (setup_ch7036()) {
-		printf("CH7036 Init failed");
+		printf("CH7036 Init failed\n");
 		return -1;
 	}
 #endif
