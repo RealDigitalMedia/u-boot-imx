@@ -243,7 +243,7 @@
 	#define CONFIG_MMC
 	#define CONFIG_GENERIC_MMC
 	#define CONFIG_IMX_MMC
-	#define CONFIG_SYS_FSL_USDHC_NUM        2
+	#define CONFIG_SYS_FSL_USDHC_NUM        4
 	#define CONFIG_SYS_FSL_ESDHC_ADDR       0
 	#define CONFIG_SYS_MMC_ENV_DEV  2
 	#define CONFIG_DOS_PARTITION	1
