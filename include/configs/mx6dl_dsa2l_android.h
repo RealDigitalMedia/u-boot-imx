@@ -68,15 +68,16 @@
 #undef CONFIG_RD_LOADADDR
 #undef CONFIG_EXTRA_ENV_SETTINGS
 
-
 #define CONFIG_LOADADDR		0x10800000	/* loadaddr env var */
 #define CONFIG_RD_LOADADDR      0x11000000
 
 #define CONFIG_INITRD_TAG
 #define	CONFIG_EXTRA_ENV_SETTINGS					\
+		"bootarg=console=ttymxc0,115200 androidboot.console=ttymxc0 fb0base=0x27b00000 vmalloc=400M init=/init video=mxcfb0:dev=hdmi,1920x1080M@60,bpp=32 video=mxcfb1:off video=mxcfb2:off fbmem=28M androidboot.hardware=freescale\0" \
 		"netdev=eth0\0"						\
 		"ethprime=FEC0\0"					\
 		"splashimage=0x30000000\0"				\
 		"splashpos=m,m\0"					\
-		"lvds_num=0\0"
+		"lvds_num=0\0"						\
+		"vag_resolution=4\0"
 #endif

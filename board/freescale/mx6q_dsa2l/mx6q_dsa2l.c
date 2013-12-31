@@ -999,6 +999,7 @@ void Display() {
 
 static int setup_ch7036(void) {
     unsigned char *dP = &ch7036_dat[0], value;
+    char *s;
     int totalOutput, outputIndex, i;
     OUTPUT_INFO *outputInfo;
     REG_SETTING *regSetting;
@@ -1021,9 +1022,11 @@ static int setup_ch7036(void) {
 
 		// Detect external VGA type
 		// If VGA found, get VGA resolution
-		printf("VGA Monitor found!\n");
-    	outputIndex = 1;
-
+//		s = getenv("vag_resolution");
+//    	outputIndex = simple_strtol(s,NULL,10);
+//		printf("VGA Monitor found! Output = %d\n", outputIndex);
+//    	if (outputIndex > totalOutput)
+    		outputIndex = 4;	// 1024x768
 		// Travel the table to get corresponding register setting
     	outputInfo = (OUTPUT_INFO *)(dP + TOTAL_OUTPUT_NUMBER + 1) + outputIndex;
     	printf("Mode index = 0x%02x\n", outputInfo->modeIndex);
@@ -2120,8 +2123,8 @@ int board_late_init(void)
 //	setup_i2c(CONFIG_AUD_I2C_PORT);
 //	setup_i2c(CONFIG_CH7036_I2C_PORT);
 //	setup_i2c(CONFIG_PMIC_I2C_PORT);
-	setup_i2c(I2C3_BASE_ADDR);
-	i2c_bus_recovery();
+//	setup_i2c(I2C3_BASE_ADDR);
+//	i2c_bus_recovery();
 
 	// TODO: CH7036 init and PMIC init or WM codec init
 //	if (setup_pmic_voltages()) {
@@ -2129,8 +2132,8 @@ int board_late_init(void)
 //		return -1;
 //	}
 
-//	setup_i2c(I2C3_BASE_ADDR);
-//	i2c_bus_recovery();
+	setup_i2c(I2C3_BASE_ADDR);
+	i2c_bus_recovery();
 
 	if (setup_ch7036()) {
 		printf("CH7036 Init failed\n");
