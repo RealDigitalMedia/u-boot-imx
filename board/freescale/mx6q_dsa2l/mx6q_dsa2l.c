@@ -1023,7 +1023,7 @@ static int setup_ch7036(void) {
 		// Detect external VGA type
 		// If VGA found, get VGA resolution
 //		s = getenv("vag_resolution");
-//    	outputIndex = simple_strtol(s,NULL,10);
+//    	outputIndex = (int)simple_strtol(s,NULL,10);
 //		printf("VGA Monitor found! Output = %d\n", outputIndex);
 //    	if (outputIndex > totalOutput)
     		outputIndex = 4;	// 1024x768
