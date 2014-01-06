@@ -78,6 +78,6 @@
 		"ethprime=FEC0\0"					\
 		"splashimage=0x30000000\0"				\
 		"splashpos=m,m\0"					\
-		"lvds_num=0\0"						\
-		"vag_resolution=11\0"
+		"vga_rsl=4\0"				\
+		"lvds_num=0\0"
 #endif

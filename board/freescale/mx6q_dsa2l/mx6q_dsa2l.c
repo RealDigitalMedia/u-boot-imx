@@ -120,6 +120,7 @@ static struct pwm_device pwm0 = {
 };
 
 static int di = 1;
+static int pT = 0;
 
 extern int ipuv3_fb_init(struct fb_videomode *mode, int di,
 			int interface_pix_fmt,
@@ -131,6 +132,14 @@ static struct fb_videomode lvds_xga = {
 	 FB_SYNC_EXT,
 	 FB_VMODE_NONINTERLACED,
 	 0,
+};
+
+static struct fb_videomode lvds_wvga = {
+	/* 800x480 @ 60 Hz , pixel clk @ 27MHz */
+	"WVGA", 60, 800, 480, 40000, 220, 40, 21, 7, 60, 10,
+	FB_SYNC_EXT,
+	FB_VMODE_NONINTERLACED,
+	0,
 };
 
 vidinfo_t panel_info;
@@ -997,21 +1006,112 @@ void Display() {
     }
 }
 
+int findOutputIndex(void) {
+	MONITOR_INFO mInfo, *opt;
+	int i, retVal = -1;
+	u16 pixelClk = 0, tResH = 0, tResV = 0;
+	u8 value;
+
+	// Get Monitor's Prefered Timing Mode pixel clock
+	i2c_read(VESA_DDC_ADDR, 0x36, 1, &value, 1);
+	pixelClk |= value;
+	i2c_read(VESA_DDC_ADDR, 0x37, 1, &value, 1);
+	pixelClk |= value << 8;
+	if (pixelClk == 0)
+		return retVal;
+
+	// Get monitor's Prefered Timing Mode resolution
+	mInfo.horizontal = 0;
+	i2c_read(VESA_DDC_ADDR, 0x38, 1, &value, 1);
+	mInfo.horizontal |= value;
+	i2c_read(VESA_DDC_ADDR, 0x3a, 1, &value, 1);
+	mInfo.horizontal |= ((value >> 4) << 8);
+
+	mInfo.vertical = 0;
+	i2c_read(VESA_DDC_ADDR, 0x3b, 1, &value, 1);
+	mInfo.vertical |= value;
+	i2c_read(VESA_DDC_ADDR, 0x3d, 1, &value, 1);
+	mInfo.vertical |= ((value >> 4) << 8);
+
+	// Get total resolution
+	tResH = 0;
+	i2c_read(VESA_DDC_ADDR, 0x39, 1, &value, 1);
+	tResH |= value;
+	i2c_read(VESA_DDC_ADDR, 0x3a, 1, &value, 1);
+	tResH |= ((value & 0x0f) << 8);
+
+	tResV = 0;
+	i2c_read(VESA_DDC_ADDR, 0x3c, 1, &value, 1);
+	tResV |= value;
+	i2c_read(VESA_DDC_ADDR, 0x3d, 1, &value, 1);
+	tResV |= ((value & 0x0f) << 8);
+
+	// Is monitor interlaced ?
+	mInfo.interlaced = 0;
+	i2c_read(VESA_DDC_ADDR, 0x47, 1, &value, 1);
+	if (value & 0x80)
+		mInfo.interlaced = 1;
+
+
+	// Calculate monitor refresh time
+//	printf("pixelClk = 0x%04x, tResH = %d, tResV = %d\n",pixelClk,tResH,tResV);
+	i = (pixelClk * 10000) / ((mInfo.horizontal + tResH) * (mInfo.vertical + tResV));
+	mInfo.pixelClock = (u8)i;
+
+	// Search ch7036 output table to find best output
+	opt = &output_opt[0];
+	for (i = 0;i < sizeof(output_opt)/sizeof(MONITOR_INFO);i++) {
+		if (opt->horizontal == mInfo.horizontal) {
+			if (opt->vertical == mInfo.vertical) {
+				retVal = i;
+				if (mInfo.interlaced == opt->interlaced)
+					break;
+			}
+		}
+		opt++;
+	}
+
+//	printf("H = %d, V = %d, RefTime = %d, Type = %d\n", mInfo.horizontal, mInfo.vertical, mInfo.pixelClock, mInfo.interlaced);
+//	printf("Select type = %d\n", retVal);
+	return retVal;
+}
+
+int monitorIs16_9(void) {
+	u16 resH, resV;
+	u8 value;
+	double ratio;
+
+	resH = 0;
+	i2c_read(VESA_DDC_ADDR, 0x38, 1, &value, 1);
+	resH |= value;
+	i2c_read(VESA_DDC_ADDR, 0x3a, 1, &value, 1);
+	resH |= ((value >> 4) << 8);
+
+	resV = 0;
+	i2c_read(VESA_DDC_ADDR, 0x3b, 1, &value, 1);
+	resV |= value;
+	i2c_read(VESA_DDC_ADDR, 0x3d, 1, &value, 1);
+	resV |= ((value >> 4) << 8);
+
+	ratio = (double)resH/(double)resV;
+
+	return ratio >= 1.6 ? 1 : 0;
+}
+
 static int setup_ch7036(void) {
-    unsigned char *dP = &ch7036_dat[0], value;
-    char *s;
+    unsigned char *dP, value;
     int totalOutput, outputIndex, i;
+    unsigned int regOffset;
+
     OUTPUT_INFO *outputInfo;
     REG_SETTING *regSetting;
+
+    unsigned char *aReg, *s;	// fixed the issue that data is in-aligment
 
     // check ch7036
     printf("Ch7036 Init !\n");
     if (!i2c_probe(CONFIG_CH7036_I2C_SLAVE)) {
     	// Init Ch7036 chipset
-    	printf("Ch7036 found and start initial !\n");
-    	totalOutput = (int)*(dP+TOTAL_OUTPUT_NUMBER);
-//    	printf("Total output = %d\n", TOTAL_OUTPUT_NUMBER);
-
     	// Check wether VGA port is attached or not.
 //		mxc_iomux_v3_setup_pad(MX6X_IOMUX(PAD_SD3_DAT3__GPIO_7_7));
 //		gpio_direction_input(VGA_PORT_STATUS);
@@ -1021,25 +1121,39 @@ static int setup_ch7036(void) {
 //		}
 
 		// Detect external VGA type
-		// If VGA found, get VGA resolution
-//		s = getenv("vag_resolution");
-//    	i = simple_strtol(s,NULL,10);
-//    	outputIndex = i;
-//		printf("VGA Monitor found! Output = %d\n", outputIndex);
-//    	if (outputIndex > totalOutput)
-    		outputIndex = 4;	// 1024x768
+		outputIndex = findOutputIndex();
+    	if (outputIndex < 0 && outputIndex > 21) {
+    		// Get default vga output if monitor can't be recognized
+    		s = getenv("vga_rsl");
+    		outputIndex = simple_strtol(s, NULL, 10);
+    		dP = &ch7036_dat_4_3[0];
+    	} else {
+    		// Check monitor ratio of screen horizontal and vertical, pT determined in setup_splash_image()
+    		if (pT == 1) {
+    			// 16:9 monitor
+    			dP = &ch7036_dat_16_9[0];
+    		} else {
+    			// 4:3 monitor
+    			dP = &ch7036_dat_4_3[0];
+    		}
+    	}
+
+//		printf("VGA Monitor found! Output = %d, Ratio = %s\n", outputIndex, pT == 1?"16:9":"4:3");
 		// Travel the table to get corresponding register setting
     	outputInfo = (OUTPUT_INFO *)(dP + TOTAL_OUTPUT_NUMBER + 1) + outputIndex;
-    	printf("Mode index = 0x%02x\n", outputInfo->modeIndex);
-    	printf("Reg Len = 0x%02x\n", outputInfo->len);
-    	printf("Reg Offset = 0x%04x\n", outputInfo->regOffset);
-
-    	regSetting = (REG_SETTING *)(dP + outputInfo->regOffset);
+//    	printf("Mode index = 0x%02x\n", outputInfo->modeIndex);
+//    	printf("Reg Len = 0x%02x\n", outputInfo->len);
+//    	printf("Reg Offset = 0x%04x\n", outputInfo->regOffset);
+    	regOffset = 0;
+    	aReg = &outputInfo->regOffset;
+    	regOffset |= (*(aReg) | (*(aReg+1) << 8));
+//    	printf("Reg Offset = 0x%04x\n", regOffset);
+    	regSetting = (REG_SETTING *)(dP + regOffset);
     	for (i = 0 ; i < outputInfo->len ; i++) {
     		// Fill register setting to Ch7036
-        	printf("0x%02x:0x%02x ", regSetting->regIndex, regSetting->regValue);
-        	if (i!=0 && (i%7 == 0))
-        		printf("\n");
+//        	printf("0x%02x:0x%02x ", regSetting->regIndex, regSetting->regValue);
+//        	if (i!=0 && (i%7 == 0))
+//        		printf("\n");
     		i2c_write(CONFIG_CH7036_I2C_SLAVE, regSetting->regIndex, 1, &regSetting->regValue, 1);
         	regSetting++;
     	}
@@ -1928,8 +2042,12 @@ void lcd_enable(void)
 		writel(reg, CCM_BASE_ADDR + CLKCTL_CCGR3);
 	}
 
-	ret = ipuv3_fb_init(&lvds_xga, di, IPU_PIX_FMT_RGB666,
-			DI_PCLK_LDB, 65000000);
+	if (pT == 0)
+		ret = ipuv3_fb_init(&lvds_xga, di, IPU_PIX_FMT_RGB666,
+				DI_PCLK_LDB, 65000000);
+	else
+		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB565, DI_PCLK_LDB, 32000000);
+
 	if (ret)
 		puts("LCD cannot be configured\n");
 
@@ -1952,10 +2070,26 @@ void lcd_enable(void)
 #ifdef CONFIG_VIDEO_MX5
 void panel_info_init(void)
 {
-	panel_info.vl_bpix = LCD_BPP;
-	panel_info.vl_col = lvds_xga.xres;
-	panel_info.vl_row = lvds_xga.yres;
-	panel_info.cmap = colormap;
+	switch(pT) {
+	case 0:
+		panel_info.vl_bpix = LCD_BPP;
+		panel_info.vl_col = lvds_xga.xres;
+		panel_info.vl_row = lvds_xga.yres;
+		panel_info.cmap = colormap;
+		break;
+	case 1:
+		panel_info.vl_bpix = LCD_BPP;
+		panel_info.vl_col = lvds_wvga.xres;
+		panel_info.vl_row = lvds_wvga.yres;
+		panel_info.cmap = colormap;
+		break;
+	default:
+		panel_info.vl_bpix = LCD_BPP;
+		panel_info.vl_col = lvds_xga.xres;
+		panel_info.vl_row = lvds_xga.yres;
+		panel_info.cmap = colormap;
+		break;
+	}
 }
 #endif
 
@@ -1964,6 +2098,22 @@ void setup_splash_image(void)
 {
 	char *s;
 	ulong addr;
+
+	mxc_iomux_v3_setup_pad(MX6X_IOMUX(PAD_SD3_DAT3__GPIO_7_7));
+	gpio_direction_input(VGA_PORT_STATUS);
+	if (gpio_get_value(VGA_PORT_STATUS) != 1) {
+		printf("VGA Monitor is attached!\n");
+		setup_i2c(I2C3_BASE_ADDR);
+		i2c_bus_recovery();
+		if (monitorIs16_9()) {
+			pT = 1;
+		}
+	} else {
+		printf("VGA Monitor not attached!\n");
+		pT = 0;
+	}
+
+	panel_info_init();
 
 	s = getenv("splashimage");
 
