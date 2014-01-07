@@ -47,7 +47,8 @@
 #define I2SR_RX_NO_AK	(1 << 0)
 
 #ifdef CONFIG_SYS_I2C_PORT
-# define I2C_BASE	CONFIG_SYS_I2C_PORT
+//# define I2C_BASE	CONFIG_SYS_I2C_PORT
+static void *I2C_BASE = (void *)CONFIG_SYS_I2C_PORT;
 #else
 # error "define CONFIG_SYS_I2C_PORT(I2C base address) to use the I2C driver"
 #endif
@@ -76,6 +77,53 @@ static inline void i2c_reset(void)
 	__REG16(I2C_BASE + I2CR) = I2CR_IEN;
 }
 
+void set_i2c_host(void *host) {
+	I2C_BASE = host;
+}
+
+unsigned int i2c_get_bus_num(void) {
+	unsigned int retVal = 0;
+	int host;
+	host = (int)I2C_BASE;
+	switch (host) {
+		case I2C1_BASE_ADDR:
+			retVal = 1;
+			break;
+		case I2C2_BASE_ADDR:
+			retVal = 2;
+			break;
+		case I2C3_BASE_ADDR:
+			retVal = 3;
+			break;
+		case I2C4_BASE_ADDR:
+			retVal = 4;
+			break;
+	}
+	return retVal;
+}
+
+int i2c_set_bus_num(unsigned int bus) {
+	void *host = (void *)I2C1_BASE_ADDR;
+
+	switch(bus) {
+		case 1:
+			host = (void *)I2C1_BASE_ADDR;
+			break;
+		case 2:
+			host = (void *)I2C2_BASE_ADDR;
+			break;
+		case 3:
+			host = (void *)I2C3_BASE_ADDR;
+			break;
+		case 4:
+			host = (void *)I2C4_BASE_ADDR;
+			break;
+	}
+
+	set_i2c_host(host);
+	return 0;
+}
+
 void i2c_init(int speed, int unused)
 {
 	int freq;
@@ -90,8 +138,8 @@ void i2c_init(int speed, int unused)
 		if (freq / div[i] <= speed)
 			break;
 
-	DPRINTF("%s: root clock: %d, speed: %d div: %x\n",
-		__func__, freq, speed, i);
+	DPRINTF("%s: root clock: %d, speed: %d div: %x, iobase = %x\n",
+		__func__, freq, speed, i, I2C_BASE);
 
 	__REG16(I2C_BASE + IFDR) = i;
 	i2c_reset();

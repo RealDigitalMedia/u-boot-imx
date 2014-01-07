@@ -2101,10 +2101,12 @@ void setup_splash_image(void)
 
 	mxc_iomux_v3_setup_pad(MX6X_IOMUX(PAD_SD3_DAT3__GPIO_7_7));
 	gpio_direction_input(VGA_PORT_STATUS);
+	set_i2c_host(CONFIG_CH7036_I2C_PORT);
+	i2c_init(CONFIG_CH7036_I2C_SPEED, CONFIG_CH7036_I2C_SLAVE);
+	setup_i2c(CONFIG_CH7036_I2C_PORT);
+	i2c_bus_recovery();
 	if (gpio_get_value(VGA_PORT_STATUS) != 1) {
 		printf("VGA Monitor is attached!\n");
-		setup_i2c(I2C3_BASE_ADDR);
-		i2c_bus_recovery();
 		if (monitorIs16_9()) {
 			pT = 1;
 		}
@@ -2114,6 +2116,7 @@ void setup_splash_image(void)
 	}
 
 	panel_info_init();
+	set_i2c_host(CONFIG_SYS_I2C_PORT);
 
 	s = getenv("splashimage");
 
@@ -2282,14 +2285,12 @@ int board_late_init(void)
 //		printf("PMIC Init failed\n");
 //		return -1;
 //	}
-
-	setup_i2c(I2C3_BASE_ADDR);
-	i2c_bus_recovery();
-
+	set_i2c_host(CONFIG_CH7036_I2C_PORT);
 	if (setup_ch7036()) {
 		printf("CH7036 Init failed\n");
 		return -1;
 	}
+	set_i2c_host(CONFIG_SYS_I2C_PORT);
 #endif
 	return 0;
 }

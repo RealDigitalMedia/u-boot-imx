@@ -194,13 +194,14 @@
  * I2C Configs
  */
 #ifdef CONFIG_CMD_I2C
+	#define CONFIG_I2C_MULTI_BUS 1
 	#define CONFIG_MX6_INTER_LDO_BYPASS 0
 	#define CONFIG_HARD_I2C         1
 	#define CONFIG_I2C_MXC          1
 //	#define CONFIG_SYS_I2C_PORT             I2C2_BASE_ADDR
 //	#define CONFIG_SYS_I2C_SPEED            100000
 //	#define CONFIG_SYS_I2C_SLAVE            0x8
-	#define CONFIG_SYS_I2C_PORT             I2C3_BASE_ADDR
+	#define CONFIG_SYS_I2C_PORT             I2C2_BASE_ADDR
 	#define CONFIG_SYS_I2C_SPEED            100000
 	#define CONFIG_SYS_I2C_SLAVE            0x8
 
@@ -212,7 +213,7 @@
 	#define CONFIG_CH7036_I2C_SPEED        100000
 	#define CONFIG_CH7036_I2C_SLAVE        0x76
 
-	#define CONFIG_PMIC_I2C_PORT			I2C4_BASE_ADDR
+	#define CONFIG_PMIC_I2C_PORT			I2C3_BASE_ADDR
 	#define CONFIG_PMIC_I2C_SPEED          100000
 	#define CONFIG_PMIC_I2C_SLAVE          (0x68 >> 1)
 #endif
