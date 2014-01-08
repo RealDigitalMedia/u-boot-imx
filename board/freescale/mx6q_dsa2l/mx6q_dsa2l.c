@@ -1115,10 +1115,10 @@ static int setup_ch7036(void) {
     	// Check wether VGA port is attached or not.
 //		mxc_iomux_v3_setup_pad(MX6X_IOMUX(PAD_SD3_DAT3__GPIO_7_7));
 //		gpio_direction_input(VGA_PORT_STATUS);
-//		if (gpio_get_value(VGA_PORT_STATUS) == 1) {
-//			printf("VGA Monitor not attached!\n");
-//			return -1;
-//		}
+		if (gpio_get_value(VGA_PORT_STATUS) == 1) {
+			printf("VGA Monitor not attached!\n");
+			return -1;
+		}
 
 		// Detect external VGA type
 		outputIndex = findOutputIndex();
@@ -2291,6 +2291,10 @@ int board_late_init(void)
 		return -1;
 	}
 	set_i2c_host(CONFIG_SYS_I2C_PORT);
+
+	if (gpio_get_value(VGA_PORT_STATUS) != 1) {
+		setenv("bootargs", CONFIG_VGA_BOOTARGS);
+	}
 #endif
 	return 0;
 }

@@ -72,7 +72,7 @@
 #define CONFIG_RD_LOADADDR      0x11000000
 
 #define CONFIG_INITRD_TAG
-#define	CONFIG_EXTRA_ENV_SETTINGS					\
+#define CONFIG_EXTRA_ENV_SETTINGS					\
 		"bootargs=console=ttymxc0,115200 androidboot.console=ttymxc0 vmalloc=400M init=/init video=mxcfb0:dev=hdmi,1920x1080M@60,bpp=32 video=mxcfb1:off video=mxcfb2:off fbmem=28M androidboot.hardware=freescale\0" \
 		"netdev=eth0\0"						\
 		"ethprime=FEC0\0"					\
@@ -81,3 +81,5 @@
 		"vga_rsl=4\0"				\
 		"lvds_num=0\0"
 #endif
+
+#define CONFIG_VGA_BOOTARGS "bootargs=console=ttymxc0,115200 androidboot.console=ttymxc0 vmalloc=400M init=/init video=mxcfb0:dev=ldb,bpp=32 video=mxcfb1:off video=mxcfb2:off fbmem=10M fb0base=0x27b00000 androidboot.hardware=freescale\0"
