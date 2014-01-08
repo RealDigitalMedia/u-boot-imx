@@ -2107,8 +2107,12 @@ void setup_splash_image(void)
 	i2c_bus_recovery();
 	if (gpio_get_value(VGA_PORT_STATUS) != 1) {
 		printf("VGA Monitor is attached!\n");
-		if (monitorIs16_9()) {
-			pT = 1;
+		if (!i2c_probe(VESA_DDC_ADDR)) {
+			if (monitorIs16_9()) {
+				pT = 1;
+			}
+		} else {
+			pT = 0;
 		}
 	} else {
 		printf("VGA Monitor not attached!\n");
