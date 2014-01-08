@@ -2046,7 +2046,7 @@ void lcd_enable(void)
 		ret = ipuv3_fb_init(&lvds_xga, di, IPU_PIX_FMT_RGB666,
 				DI_PCLK_LDB, 65000000);
 	else
-		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB565, DI_PCLK_LDB, 32000000);
+		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB666, DI_PCLK_LDB, 32000000);
 
 	if (ret)
 		puts("LCD cannot be configured\n");
