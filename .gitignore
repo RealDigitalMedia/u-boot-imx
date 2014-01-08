@@ -75,3 +75,6 @@ cscope.*
 #MAC system Files
 .DS_Store
 ._.DS_Store
+
+# uboot temp
+/include/asm-arm/proc/
