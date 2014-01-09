@@ -136,7 +136,8 @@ static struct fb_videomode lvds_xga = {
 
 static struct fb_videomode lvds_wvga = {
 	/* 800x480 @ 60 Hz , pixel clk @ 27MHz */
-	"WVGA", 60, 800, 480, 40000, 220, 40, 21, 7, 60, 10,
+	"WVGA", 60, 800, 480, 31250, 220, 40, 21, 7, 60, 10,
+//	"WVGA", 60, 1366, 768, 13158, 220, 40, 21, 7, 60, 10,
 	FB_SYNC_EXT,
 	FB_VMODE_NONINTERLACED,
 	0,
@@ -1012,6 +1013,9 @@ int findOutputIndex(void) {
 	u16 pixelClk = 0, tResH = 0, tResV = 0;
 	u8 value;
 
+	if (i2c_probe(VESA_DDC_ADDR))
+		return retVal;
+
 	// Get Monitor's Prefered Timing Mode pixel clock
 	i2c_read(VESA_DDC_ADDR, 0x36, 1, &value, 1);
 	pixelClk |= value;
@@ -1115,14 +1119,15 @@ static int setup_ch7036(void) {
     	// Check wether VGA port is attached or not.
 //		mxc_iomux_v3_setup_pad(MX6X_IOMUX(PAD_SD3_DAT3__GPIO_7_7));
 //		gpio_direction_input(VGA_PORT_STATUS);
-		if (gpio_get_value(VGA_PORT_STATUS) == 1) {
-			printf("VGA Monitor not attached!\n");
-			return -1;
-		}
+//		if (gpio_get_value(VGA_PORT_STATUS) == 1) {
+//			printf("VGA Monitor not attached!\n");
+//			return -1;
+//		}
 
 		// Detect external VGA type
 		outputIndex = findOutputIndex();
-    	if (outputIndex < 0 && outputIndex > 21) {
+		printf("outputIndex = %d\n", outputIndex);
+    	if (outputIndex < 0 || outputIndex > 21) {
     		// Get default vga output if monitor can't be recognized
     		s = getenv("vga_rsl");
     		outputIndex = simple_strtol(s, NULL, 10);
@@ -1138,7 +1143,7 @@ static int setup_ch7036(void) {
     		}
     	}
 
-//		printf("VGA Monitor found! Output = %d, Ratio = %s\n", outputIndex, pT == 1?"16:9":"4:3");
+		printf("VGA Monitor found! Output = %d, Ratio = %s\n", outputIndex, pT == 1?"16:9":"4:3");
 		// Travel the table to get corresponding register setting
     	outputInfo = (OUTPUT_INFO *)(dP + TOTAL_OUTPUT_NUMBER + 1) + outputIndex;
 //    	printf("Mode index = 0x%02x\n", outputInfo->modeIndex);
@@ -2047,6 +2052,7 @@ void lcd_enable(void)
 				DI_PCLK_LDB, 65000000);
 	else
 		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB666, DI_PCLK_LDB, 32000000);
+//		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB666, DI_PCLK_LDB, 76000000);
 
 	if (ret)
 		puts("LCD cannot be configured\n");
