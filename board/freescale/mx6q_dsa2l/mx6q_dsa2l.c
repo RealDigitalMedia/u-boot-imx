@@ -136,8 +136,11 @@ static struct fb_videomode lvds_xga = {
 
 static struct fb_videomode lvds_wvga = {
 	/* 800x480 @ 60 Hz , pixel clk @ 27MHz */
-	"WVGA", 60, 800, 480, 31250, 220, 40, 21, 7, 60, 10,
-//	"WVGA", 60, 1366, 768, 13158, 220, 40, 21, 7, 60, 10,
+//	"WVGA", 60, 800, 480, 31250, 220, 40, 21, 7, 60, 10,
+//	"WVGA", 60, 1366, 768, 13255, 220, 40, 21, 7, 60, 10,
+//	"WVGA", 60, 1280, 800, 16613, 40, 40, 21, 7, 60, 10,
+	"WVGA", 60, 1024, 600, 21067, 160, 40, 21, 7, 60, 10,
+//	"WVGA", 60, 1366, 768, 15906, 220, 40, 21, 7, 60, 10,
 	FB_SYNC_EXT,
 	FB_VMODE_NONINTERLACED,
 	0,
@@ -2051,8 +2054,11 @@ void lcd_enable(void)
 		ret = ipuv3_fb_init(&lvds_xga, di, IPU_PIX_FMT_RGB666,
 				DI_PCLK_LDB, 65000000);
 	else
-		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB666, DI_PCLK_LDB, 32000000);
-//		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB666, DI_PCLK_LDB, 76000000);
+//		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB666, DI_PCLK_LDB, 32000000);	//800x480
+//		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB666, DI_PCLK_LDB, 76000000); //1366x768
+//		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB666, DI_PCLK_LDB, 60000000); //1280x800
+		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB666, DI_PCLK_LDB, 47360000); //1024x600
+//		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB666, DI_PCLK_LDB, 63000000); //1366x768
 
 	if (ret)
 		puts("LCD cannot be configured\n");
