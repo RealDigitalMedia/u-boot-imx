@@ -2272,7 +2272,8 @@ int check_recovery_cmd_file(void)
 
 int board_late_init(void)
 {
-	int ret = 0;
+	char s[256];
+//	int ret = 0;
 #ifdef MX6Q_SABRESD_ANDROID_H
 	switch (get_boot_device()) {
 	case SD_BOOT:
@@ -2309,7 +2310,14 @@ int board_late_init(void)
 	set_i2c_host(CONFIG_SYS_I2C_PORT);
 
 	if (gpio_get_value(VGA_PORT_STATUS) != 1) {
-		setenv("bootargs", CONFIG_VGA_BOOTARGS);
+		if (pT) {
+			sprintf(s,CONFIG_VGA_BOOTARGS,"LDB_WVGA");
+		}
+		else {
+			sprintf(s,CONFIG_VGA_BOOTARGS,"LDB_XGA");
+		}
+		printf("%s\n",s);
+//		setenv("bootargs", s);
 	}
 #endif
 	return 0;

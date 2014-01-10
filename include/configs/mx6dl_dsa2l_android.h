@@ -82,4 +82,4 @@
 		"lvds_num=0\0"
 #endif
 
-#define CONFIG_VGA_BOOTARGS "bootargs=console=ttymxc0,115200 androidboot.console=ttymxc0 vmalloc=400M init=/init video=mxcfb0:dev=ldb,bpp=32 video=mxcfb1:off video=mxcfb2:off fbmem=10M fb0base=0x27b00000 androidboot.hardware=freescale\0"
+#define CONFIG_VGA_BOOTARGS "console=ttymxc0,115200 androidboot.console=ttymxc0 androidboot.hardware=freescale init=/init vmalloc=400M video=mxcfb0:dev=ldb,%s,bpp=32 video=mxcfb1:dev=hdmi,1920x1080M@60,bpp=32\0"
