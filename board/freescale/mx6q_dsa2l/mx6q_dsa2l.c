@@ -136,11 +136,20 @@ static struct fb_videomode lvds_xga = {
 
 static struct fb_videomode lvds_wvga = {
 	/* 800x480 @ 60 Hz , pixel clk @ 27MHz */
-//	"WVGA", 60, 800, 480, 31250, 220, 40, 21, 7, 60, 10,
-//	"WVGA", 60, 1366, 768, 13255, 220, 40, 21, 7, 60, 10,
-//	"WVGA", 60, 1280, 800, 16613, 40, 40, 21, 7, 60, 10,
+#ifdef CONFIG_LVDS16_9_800X480
+	"WVGA", 60, 800, 480, 31250, 220, 40, 21, 7, 60, 10,
+#endif
+#ifdef CONFIG_LVDS16_9_1366X768
+//	"WVGA", 60, 1366, 768, 13255, 40, 40, 21, 7, 60, 10,
+	"WVGA", 60, 1366, 768, 13158, 40, 40, 21, 7, 60, 10,
+#endif
+#ifdef CONFIG_LVDS16_9_1280X800
+	"WVGA", 60, 1280, 800, 16613, 40, 40, 21, 7, 60, 10,
+#endif
+#ifdef CONFIG_LVDS16_9_1024X600
 	"WVGA", 60, 1024, 600, 21067, 160, 40, 21, 7, 60, 10,
-//	"WVGA", 60, 1366, 768, 15906, 220, 40, 21, 7, 60, 10,
+//	"WVGA", 60, 1024, 600, 16129, 160, 40, 21, 7, 60, 10,
+#endif
 	FB_SYNC_EXT,
 	FB_VMODE_NONINTERLACED,
 	0,
@@ -1166,6 +1175,17 @@ static int setup_ch7036(void) {
         	regSetting++;
     	}
 
+    	value = 0x0;
+    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x03, 1, &value, 1);
+    	value = 0x32;
+    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x0f, 1, &value, 1);
+    	value = 0x1b;
+    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x11, 1, &value, 1);
+    	value = 0x26;
+    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x13, 1, &value, 1);
+    	value = 0x46;
+    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x68, 1, &value, 1);
+
     	CalculateINCs();
 
     	Display();
@@ -2054,11 +2074,20 @@ void lcd_enable(void)
 		ret = ipuv3_fb_init(&lvds_xga, di, IPU_PIX_FMT_RGB666,
 				DI_PCLK_LDB, 65000000);
 	else
-//		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB666, DI_PCLK_LDB, 32000000);	//800x480
+#ifdef CONFIG_LVDS16_9_800X480
+		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB666, DI_PCLK_PLL3, 32000000);	//800x480
+#endif
+#ifdef CONFIG_LVDS16_9_1366X768
 //		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB666, DI_PCLK_LDB, 76000000); //1366x768
-//		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB666, DI_PCLK_LDB, 60000000); //1280x800
+		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB666, DI_PCLK_PLL3, 76000000); //1366x768
+#endif
+#ifdef CONFIG_LVDS16_9_1280X800
+		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB666, DI_PCLK_LDB, 60000000); //1280x800
+#endif
+#ifdef CONFIG_LVDS16_9_1024X600
 		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB666, DI_PCLK_LDB, 47360000); //1024x600
-//		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB666, DI_PCLK_LDB, 63000000); //1366x768
+//		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB666, DI_PCLK_LDB, 62000000); //1024x600
+#endif
 
 	if (ret)
 		puts("LCD cannot be configured\n");
@@ -2302,22 +2331,24 @@ int board_late_init(void)
 //		printf("PMIC Init failed\n");
 //		return -1;
 //	}
+#ifdef CONFIG_INIT_CH7036
 	set_i2c_host(CONFIG_CH7036_I2C_PORT);
 	if (setup_ch7036()) {
 		printf("CH7036 Init failed\n");
 		return -1;
 	}
 	set_i2c_host(CONFIG_SYS_I2C_PORT);
+#endif //CONFIG_INIT_CH7036
 
 	if (gpio_get_value(VGA_PORT_STATUS) != 1) {
 		if (pT) {
-			sprintf(s,CONFIG_VGA_BOOTARGS,"LDB_WVGA");
+			sprintf(s,CONFIG_VGA_BOOTARGS,"LDB_WXGA");
 		}
 		else {
 			sprintf(s,CONFIG_VGA_BOOTARGS,"LDB_XGA");
 		}
 		printf("%s\n",s);
-//		setenv("bootargs", s);
+		setenv("bootargs", s);
 	}
 #endif
 	return 0;
