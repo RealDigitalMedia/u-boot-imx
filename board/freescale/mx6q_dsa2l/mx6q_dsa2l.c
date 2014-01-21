@@ -962,8 +962,6 @@ void CalculateINCs(void) {
 	i2c_read(CONFIG_CH7036_I2C_SLAVE, 0x35, 1, &value, 1);
 	hdincb |= value;
 
-	hdincb = 1366;
-
     if(hinca == 0 || hincb == 0)
         hinc = 0;
     else
