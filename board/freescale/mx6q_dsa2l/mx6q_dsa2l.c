@@ -137,17 +137,17 @@ static struct fb_videomode lvds_xga = {
 static struct fb_videomode lvds_wvga = {
 	/* 800x480 @ 60 Hz , pixel clk @ 27MHz */
 #ifdef CONFIG_LVDS16_9_800X480
-	"WVGA", 60, 800, 480, 31250, 220, 40, 21, 7, 60, 10,
+	"WVGA", 60, 800, 480, 31253, 156, 40, 8, 7, 60, 10,
 #endif
 #ifdef CONFIG_LVDS16_9_1366X768
-//	"WVGA", 60, 1366, 768, 13255, 40, 40, 21, 7, 60, 10,
-	"WVGA", 60, 1366, 768, 13158, 40, 40, 21, 7, 60, 10,
+	"WVGA", 60, 1366, 768, 13255, 64, 32, 12, 6, 98, 20,	// 76M
+//	"WVGA", 52, 1366, 768, 15594, 64, 32, 12, 6, 98, 20,	// 65M
 #endif
 #ifdef CONFIG_LVDS16_9_1280X800
 	"WVGA", 60, 1280, 800, 16613, 40, 40, 21, 7, 60, 10,
 #endif
 #ifdef CONFIG_LVDS16_9_1024X600
-	"WVGA", 60, 1024, 600, 21067, 160, 40, 21, 7, 60, 10,
+	"WVGA", 60, 1024, 600, 21067, 160, 28, 25, 3, 28, 8,
 //	"WVGA", 60, 1024, 600, 16129, 160, 40, 21, 7, 60, 10,
 #endif
 	FB_SYNC_EXT,
@@ -896,19 +896,27 @@ static int setup_pmic_voltages(void)
 		}
 	}
 #else
-	unsigned int value;
+	u16 value, swap;
 	// Init WM8326 PMIC
 	printf("WM8326 PMIC init !\n");
-	i2c_init(CONFIG_PMIC_I2C_SPEED, CONFIG_PMIC_I2C_SLAVE);
+//	i2c_init(CONFIG_PMIC_I2C_SPEED, CONFIG_PMIC_I2C_SLAVE);
 	if (!i2c_probe(CONFIG_PMIC_I2C_SLAVE)) {
 		// Get parent die ID
-		i2c_write(CONFIG_PMIC_I2C_SLAVE, 0x4000, 2, (u8*)&value, 2);
-		if ((value&0x0FFFF) != 0x6246) {
+		i2c_read(CONFIG_PMIC_I2C_SLAVE, 0x4000, 2, (u8 *)&value, 2);
+		if (value != 0x4662) {
 			printf("WM8326 PMIC not found ! - 0x%x\n", value);
 			return -1;
 		}
 		printf("WM8326 PMIC found ! - 0x%x\n", value);
 		// TODO: PMIC init
+		value = 0x8a04;
+		i2c_write(CONFIG_PMIC_I2C_SLAVE, 0x403d, 2, (u8 *)&value, 2);
+
+		i2c_read(CONFIG_PMIC_I2C_SLAVE, 0x400c, 2, (u8 *)&value, 2);
+		swap = value | 0x2000;
+		swap >>= 8;
+		swap |= (value << 8);
+		i2c_write(CONFIG_PMIC_I2C_SLAVE, 0x400c, 2, (u8 *)&swap, 2);
 		return 0;
 	}
 #endif
@@ -953,6 +961,8 @@ void CalculateINCs(void) {
 	hdincb = (unsigned int)value << 3;
 	i2c_read(CONFIG_CH7036_I2C_SLAVE, 0x35, 1, &value, 1);
 	hdincb |= value;
+
+	hdincb = 1366;
 
     if(hinca == 0 || hincb == 0)
         hinc = 0;
@@ -1122,7 +1132,7 @@ static int setup_ch7036(void) {
     OUTPUT_INFO *outputInfo;
     REG_SETTING *regSetting;
 
-    unsigned char *aReg, *s;	// fixed the issue that data is in-aligment
+    unsigned char *s;	// fixed the issue that data is in-aligment
 
     // check ch7036
     printf("Ch7036 Init !\n");
@@ -1158,33 +1168,60 @@ static int setup_ch7036(void) {
 		printf("VGA Monitor found! Output = %d, Ratio = %s\n", outputIndex, pT == 1?"16:9":"4:3");
 		// Travel the table to get corresponding register setting
     	outputInfo = (OUTPUT_INFO *)(dP + TOTAL_OUTPUT_NUMBER + 1) + outputIndex;
-//    	printf("Mode index = 0x%02x\n", outputInfo->modeIndex);
-//    	printf("Reg Len = 0x%02x\n", outputInfo->len);
+    	printf("Mode index = 0x%02x\n", outputInfo->modeIndex);
+    	printf("Reg Len = 0x%02x\n", outputInfo->len);
 //    	printf("Reg Offset = 0x%04x\n", outputInfo->regOffset);
     	regOffset = 0;
-    	aReg = &outputInfo->regOffset;
-    	regOffset |= (*(aReg) | (*(aReg+1) << 8));
-//    	printf("Reg Offset = 0x%04x\n", regOffset);
+    	regOffset = outputInfo->regOffset_Lo|(outputInfo->regOffset_Hi<<8);
+    	printf("Reg Offset = 0x%04x\n", regOffset);
     	regSetting = (REG_SETTING *)(dP + regOffset);
     	for (i = 0 ; i < outputInfo->len ; i++) {
     		// Fill register setting to Ch7036
-//        	printf("0x%02x:0x%02x ", regSetting->regIndex, regSetting->regValue);
-//        	if (i!=0 && (i%7 == 0))
-//        		printf("\n");
+        	printf("0x%02x:0x%02x ", regSetting->regIndex, regSetting->regValue);
+        	if (i!=0 && (i%7 == 0))
+        		printf("\n");
     		i2c_write(CONFIG_CH7036_I2C_SLAVE, regSetting->regIndex, 1, &regSetting->regValue, 1);
         	regSetting++;
     	}
 
-    	value = 0x0;
-    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x03, 1, &value, 1);
-    	value = 0x32;
-    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x0f, 1, &value, 1);
-    	value = 0x1b;
-    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x11, 1, &value, 1);
-    	value = 0x26;
-    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x13, 1, &value, 1);
-    	value = 0x46;
-    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x68, 1, &value, 1);
+//    	value = 0x0;
+//    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x03, 1, &value, 1);
+//    	value = 0x32;
+//    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x0f, 1, &value, 1);
+//    	value = 0x1b;
+//    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x11, 1, &value, 1);
+//    	value = 0x26;
+//    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x13, 1, &value, 1);
+//    	value = 0x46;
+//    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x68, 1, &value, 1);
+
+//    	value = 0x0;
+//    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x03, 1, &value, 1);
+//    	value = 0x23;
+//    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x09, 1, &value, 1);
+//    	value = 0x9;
+//    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x2b, 1, &value, 1);
+
+//    	value = 0x44;
+//    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x68, 1, &value, 1);
+//    	value = 0x2f;
+//    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x52, 1, &value, 1);
+//    	value = 0x4;
+//    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x5a, 1, &value, 1);
+//    	value = 0x20;
+//    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x58, 1, &value, 1);
+//    	value = 0xc0;
+//    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x67, 1, &value, 1);
+//    	value = 0xc4;
+//    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x54, 1, &value, 1);
+//    	value = 0x1;
+//    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x3, 1, &value, 1);
+//    	value = 0xd1;
+//    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x14, 1, &value, 1);
+//    	value = 0x21;
+//    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x16, 1, &value, 1);
+//    	value = 0x0;
+//    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x03, 1, &value, 1);
 
     	CalculateINCs();
 
@@ -2047,6 +2084,13 @@ void lcd_enable(void)
 	reg |= (0x3 << 10);
 	writel(reg, CCM_BASE_ADDR + CLKCTL_CSCMR2);
 
+//#ifdef CONFIG_LVDS16_9_1366X768
+	reg = readl(ANATOP_BASE_ADDR + 0x100);
+	reg &= ~0xff;
+	reg |= 0x12;
+	writel(reg, ANATOP_BASE_ADDR + 0x100);
+//#endif
+
 	/* pll2_pfd_352M */
 	/* enable after ldb_dix_clk source is set */
 	writel(0x1 << 7, ANATOP_BASE_ADDR + 0x108);
@@ -2075,11 +2119,11 @@ void lcd_enable(void)
 				DI_PCLK_LDB, 65000000);
 	else
 #ifdef CONFIG_LVDS16_9_800X480
-		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB666, DI_PCLK_PLL3, 32000000);	//800x480
+		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB666, DI_PCLK_LDB, 32000000);	//800x480
 #endif
 #ifdef CONFIG_LVDS16_9_1366X768
-//		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB666, DI_PCLK_LDB, 76000000); //1366x768
-		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB666, DI_PCLK_PLL3, 76000000); //1366x768
+//		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB666, DI_PCLK_LDB, 76000000); //1366x768_76M
+		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB666, DI_PCLK_LDB, 76000000); //1366x768
 #endif
 #ifdef CONFIG_LVDS16_9_1280X800
 		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB666, DI_PCLK_LDB, 60000000); //1280x800
@@ -2331,6 +2375,10 @@ int board_late_init(void)
 //		printf("PMIC Init failed\n");
 //		return -1;
 //	}
+	set_i2c_host(CONFIG_PMIC_I2C_PORT);
+	setup_pmic_voltages();
+	set_i2c_host(CONFIG_PMIC_I2C_PORT);
+
 #ifdef CONFIG_INIT_CH7036
 	set_i2c_host(CONFIG_CH7036_I2C_PORT);
 	if (setup_ch7036()) {
@@ -2342,10 +2390,14 @@ int board_late_init(void)
 
 	if (gpio_get_value(VGA_PORT_STATUS) != 1) {
 		if (pT) {
-			sprintf(s,CONFIG_VGA_BOOTARGS,"LDB_WXGA");
+#ifdef CONFIG_LVDS16_9_1366X768
+			sprintf(s,CONFIG_VGA_BOOTARGS,"LDB-WXGA");
+#else
+			sprintf(s,CONFIG_VGA_BOOTARGS,"LDB-WVGA");
+#endif
 		}
 		else {
-			sprintf(s,CONFIG_VGA_BOOTARGS,"LDB_XGA");
+			sprintf(s,CONFIG_VGA_BOOTARGS,"LDB-XGA");
 		}
 		printf("%s\n",s);
 		setenv("bootargs", s);
