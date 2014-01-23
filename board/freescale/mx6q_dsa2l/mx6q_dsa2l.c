@@ -1166,18 +1166,18 @@ static int setup_ch7036(void) {
 		printf("VGA Monitor found! Output = %d, Ratio = %s\n", outputIndex, pT == 1?"16:9":"4:3");
 		// Travel the table to get corresponding register setting
     	outputInfo = (OUTPUT_INFO *)(dP + TOTAL_OUTPUT_NUMBER + 1) + outputIndex;
-    	printf("Mode index = 0x%02x\n", outputInfo->modeIndex);
-    	printf("Reg Len = 0x%02x\n", outputInfo->len);
+//    	printf("Mode index = 0x%02x\n", outputInfo->modeIndex);
+//    	printf("Reg Len = 0x%02x\n", outputInfo->len);
 //    	printf("Reg Offset = 0x%04x\n", outputInfo->regOffset);
     	regOffset = 0;
     	regOffset = outputInfo->regOffset_Lo|(outputInfo->regOffset_Hi<<8);
-    	printf("Reg Offset = 0x%04x\n", regOffset);
+//    	printf("Reg Offset = 0x%04x\n", regOffset);
     	regSetting = (REG_SETTING *)(dP + regOffset);
     	for (i = 0 ; i < outputInfo->len ; i++) {
     		// Fill register setting to Ch7036
-        	printf("0x%02x:0x%02x ", regSetting->regIndex, regSetting->regValue);
-        	if (i!=0 && (i%7 == 0))
-        		printf("\n");
+//        	printf("0x%02x:0x%02x ", regSetting->regIndex, regSetting->regValue);
+//        	if (i!=0 && (i%7 == 0))
+//        		printf("\n");
     		i2c_write(CONFIG_CH7036_I2C_SLAVE, regSetting->regIndex, 1, &regSetting->regValue, 1);
         	regSetting++;
     	}
@@ -2397,7 +2397,7 @@ int board_late_init(void)
 		else {
 			sprintf(s,CONFIG_VGA_BOOTARGS,"LDB-XGA");
 		}
-		printf("%s\n",s);
+//		printf("%s\n",s);
 		setenv("bootargs", s);
 	}
 #endif

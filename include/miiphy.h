@@ -58,8 +58,9 @@ void miiphy_register (char *devname,
 
 int miiphy_set_current_dev (char *devname);
 char *miiphy_get_current_dev (void);
-
 void miiphy_listdev (void);
+void miiphy_test (char *devname, int type, int mode);
+void mii_init(void);
 
 #define BB_MII_DEVNAME	"bbmii"
 

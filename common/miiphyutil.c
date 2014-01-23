@@ -44,6 +44,8 @@
 #define debug(fmt,args...)
 #endif /* MII_DEBUG */
 
+DECLARE_GLOBAL_DATA_PTR;
+
 struct mii_dev {
 	struct list_head link;
 	char *name;
@@ -486,3 +488,163 @@ int miiphy_link (char *devname, unsigned char addr)
 	}
 }
 #endif
+
+void miiphy_test (char *devname, int type, int mode) {
+//	printf("dev=%s, type=%d, mode=%d\n", devname, type, mode);
+	switch(type) {
+		case 10:
+			printf("10Base-Te template testing\n");
+			switch(mode) {
+			case 1:
+			case 11:
+				if (mode == 1) {
+					printf("10Base-Te Link Pulse Timing, Link Pulse 100 ohm with TPM (MDI) mode testing\n");
+					miiphy_write(devname, 1, 0x10, 0x0800);
+				} else {
+					printf("10Base-Te Link Pulse Timing, Link Pulse 100 ohm with TPM (MDIX) mode testing\n");
+					miiphy_write(devname, 1, 0x10, 0x0820);
+				}
+				miiphy_write(devname, 1, 0x00, 0x8100);
+
+				miiphy_write(devname, 1, 0x1d, 0x0029);
+				miiphy_write(devname, 1, 0x1e, 0x36dc);
+				miiphy_write(devname, 1, 0x1d, 0x000b);
+				miiphy_write(devname, 1, 0x1e, 0x3c40);
+
+				miiphy_write(devname, 1, 0x1d, 0x0012);
+				miiphy_write(devname, 1, 0x1e, 0x4C0F);
+				break;
+			case 2:
+			case 12:
+				if (mode == 2) {
+					printf("10Base-Te MAU Int/MAU Int Inverted/TP_ID Load/Differential Voltage/jitter/Common-mode "
+							"output voltage (MDI) mode testing\n");
+					miiphy_write(devname, 1, 0x10, 0x0800);
+				} else {
+					printf("10Base-Te MAU Int/MAU Int Inverted/TP_ID Load/Differential Voltage/jitter/Common-mode "
+							"output voltage (MDIX) mode testing\n");
+					miiphy_write(devname, 1, 0x10, 0x0820);
+				}
+				miiphy_write(devname, 1, 0x00, 0x8100);
+
+				miiphy_write(devname, 1, 0x1d, 0x0029);
+				miiphy_write(devname, 1, 0x1e, 0x36dc);
+				miiphy_write(devname, 1, 0x1d, 0x000b);
+				miiphy_write(devname, 1, 0x1e, 0x3c40);
+
+				miiphy_write(devname, 1, 0x1d, 0x0012);
+				miiphy_write(devname, 1, 0x1e, 0x4C0F);
+				break;
+			case 3:
+			case 13:
+				if (mode == 3) {
+					printf("10Base-Te Harmonic (MDI) mode testing\n");
+					miiphy_write(devname, 1, 0x10, 0x0800);
+				} else {
+					printf("10Base-Te Harmonic (MDIX) mode testing\n");
+					miiphy_write(devname, 1, 0x10, 0x0820);
+				}
+				miiphy_write(devname, 1, 0x00, 0x8100);
+
+				miiphy_write(devname, 1, 0x1d, 0x0029);
+				miiphy_write(devname, 1, 0x1e, 0x36dc);
+				miiphy_write(devname, 1, 0x1d, 0x000b);
+				miiphy_write(devname, 1, 0x1e, 0x3c40);
+
+				miiphy_write(devname, 1, 0x1d, 0x0012);
+				miiphy_write(devname, 1, 0x1e, 0x4C0F);
+				break;
+			default:
+				printf("Test mode not found!\n");
+				break;
+			}
+			break;
+		case 100:
+			printf("100Base-TX template testing\n");
+			switch(mode) {
+			case 1:			// MDI mode
+				printf("100Base-TX MDI mode testing\n");
+				miiphy_write(devname, 1, 0x10, 0x0800);
+				miiphy_write(devname, 1, 0x00, 0xA100);
+
+				miiphy_write(devname, 1, 0x1d, 0x0029);
+				miiphy_write(devname, 1, 0x1e, 0x36dc);
+				miiphy_write(devname, 1, 0x1d, 0x000b);
+				miiphy_write(devname, 1, 0x1e, 0x3c40);
+				break;
+			case 2:			// MDIX mode
+				printf("100Base-TX MDIX mode testing\n");
+				miiphy_write(devname, 1, 0x10, 0x0820);
+				miiphy_write(devname, 1, 0x00, 0xA100);
+
+				miiphy_write(devname, 1, 0x1d, 0x0029);
+				miiphy_write(devname, 1, 0x1e, 0x36dc);
+				miiphy_write(devname, 1, 0x1d, 0x000b);
+				miiphy_write(devname, 1, 0x1e, 0x3c40);
+				break;
+			default:
+				printf("100Base-TX test mode not found!\n");
+				break;
+			}
+			break;
+		case 1000:
+			printf("1000Base-T template testing\n");
+			switch(mode) {
+			case 1:
+				printf("1000Base-T test mode 1 testing\n");
+				miiphy_write(devname, 1, 0x1d, 0x000b);
+				miiphy_write(devname, 1, 0x1e, 0x0009);
+
+				miiphy_write(devname, 1, 0x00, 0x8140);
+
+				miiphy_write(devname, 1, 0x09, 0x2200);
+				break;
+			case 2:
+				printf("1000Base-T test mode 2 testing\n");
+				miiphy_write(devname, 1, 0x1d, 0x000b);
+				miiphy_write(devname, 1, 0x1e, 0x0009);
+
+				miiphy_write(devname, 1, 0x00, 0x8140);
+
+				miiphy_write(devname, 1, 0x09, 0x4200);
+				break;
+			case 3:
+				printf("1000Base-T test mode 3 testing\n");
+				miiphy_write(devname, 1, 0x1d, 0x000b);
+				miiphy_write(devname, 1, 0x1e, 0x0009);
+
+				miiphy_write(devname, 1, 0x00, 0x8140);
+
+				miiphy_write(devname, 1, 0x09, 0x6200);
+				break;
+			case 4:
+				printf("1000Base-T test mode 4 testing\n");
+				miiphy_write(devname, 1, 0x1d, 0x000b);
+				miiphy_write(devname, 1, 0x1e, 0x0009);
+
+				miiphy_write(devname, 1, 0x00, 0x8140);
+
+				miiphy_write(devname, 1, 0x09, 0x8200);
+				break;
+			default:
+				printf("Test mode not found!\n");
+				break;
+			}
+			break;
+		default:
+			printf("1000Base-T test mode not found!\n");
+			break;
+	}
+}
+
+static int isPhyInit = 0;
+
+void mii_init(void) {
+	bd_t *bd = gd->bd;
+
+	if (isPhyInit == 0) {
+		eth_halt();
+		eth_init(bd);
+		isPhyInit = 1;
+	}
+}

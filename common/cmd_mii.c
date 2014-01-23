@@ -430,6 +430,12 @@ int do_mii (cmd_tbl_t * cmdtp, int flag, int argc, char *argv[])
 			miiphy_listdev ();
 		else
 			miiphy_set_current_dev (argv[2]);
+	} else if (op[0] == 't') {
+		if (argc > 2) {
+			miiphy_test(miiphy_get_current_dev(), simple_strtol(argv[2], NULL, 10), simple_strtol(argv[3], NULL, 10));
+		} else {
+			printf("No test parameter!\n");
+		}
 	} else {
 		cmd_usage(cmdtp);
 		return 1;
@@ -459,6 +465,9 @@ U_BOOT_CMD(
 	"mii info   <addr>              - display MII PHY info\n"
 	"mii read   <addr> <reg>        - read  MII PHY <addr> register <reg>\n"
 	"mii write  <addr> <reg> <data> - write MII PHY <addr> register <reg>\n"
+	"mii test   <type> <mode>   - type:<10/100/1000>\n"
+	"                           - mode <100>: MDI,MDIX\n"
+	"                           -      <1000>: 1 ~ 4\n"
 	"mii dump   <addr> <reg>        - pretty-print <addr> <reg> (0-5 only)\n"
 	"Addr and/or reg may be ranges, e.g. 2-7."
 );
