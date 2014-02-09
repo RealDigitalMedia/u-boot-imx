@@ -144,7 +144,7 @@ static struct fb_videomode lvds_wvga = {
 //	"WVGA", 52, 1366, 768, 15594, 64, 32, 12, 6, 98, 20,	// 65M
 #endif
 #ifdef CONFIG_LVDS16_9_1280X800
-	"WVGA", 60, 1280, 800, 16613, 40, 40, 21, 7, 60, 10,
+	"WVGA", 60, 1280, 800, 13844, 110, 20, 20, 6, 13, 20,
 #endif
 #ifdef CONFIG_LVDS16_9_1024X600
 	"WVGA", 60, 1024, 600, 21067, 160, 28, 25, 3, 28, 8,
@@ -1003,6 +1003,7 @@ void CalculateINCs(void) {
 
 	value = hdinc &0xFF;
 	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x3E, 1, &value, 1);
+
 }
 
 void Display() {
@@ -1193,13 +1194,6 @@ static int setup_ch7036(void) {
 //    	value = 0x46;
 //    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x68, 1, &value, 1);
 
-//    	value = 0x0;
-//    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x03, 1, &value, 1);
-//    	value = 0x23;
-//    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x09, 1, &value, 1);
-//    	value = 0x9;
-//    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x2b, 1, &value, 1);
-
 //    	value = 0x44;
 //    	i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x68, 1, &value, 1);
 //    	value = 0x2f;
@@ -1225,6 +1219,23 @@ static int setup_ch7036(void) {
 
     	Display();
 
+#if defined(CONFIG_LVDS16_9_1366X768) || defined(CONFIG_LVDS16_9_1280X800)
+    value = 0x0;
+    i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x03, 1, &value, 1);
+//    value = 0x1;
+//    i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x08, 1, &value, 1);
+    value = 0x46;
+    i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x68, 1, &value, 1);
+//    value = 0x45;
+//    i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x6A, 1, &value, 1);
+//    value = 0xA8;
+//    i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x6E, 1, &value, 1);
+//
+//    value = 0x4;
+//    i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x03, 1, &value, 1);
+//    value = 0x40;
+//    i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x4C, 1, &value, 1);
+#endif
 		return 0;
     } else {
     	printf("Ch7036 not found!\n");
@@ -2124,7 +2135,7 @@ void lcd_enable(void)
 		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB666, DI_PCLK_LDB, 76000000); //1366x768
 #endif
 #ifdef CONFIG_LVDS16_9_1280X800
-		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB666, DI_PCLK_LDB, 60000000); //1280x800
+		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB666, DI_PCLK_LDB, 72500000); //1280x800
 #endif
 #ifdef CONFIG_LVDS16_9_1024X600
 		ret = ipuv3_fb_init(&lvds_wvga, di, IPU_PIX_FMT_RGB666, DI_PCLK_LDB, 47360000); //1024x600
@@ -2388,8 +2399,10 @@ int board_late_init(void)
 
 	if (gpio_get_value(VGA_PORT_STATUS) != 1) {
 		if (pT) {
-#ifdef CONFIG_LVDS16_9_1366X768
+#if defined(CONFIG_LVDS16_9_1366X768)
 			sprintf(s,CONFIG_VGA_BOOTARGS,"LDB-WXGA");
+#elif defined(CONFIG_LVDS16_9_1280X800)
+			sprintf(s,CONFIG_VGA_BOOTARGS,"VIC-WXGA");
 #else
 			sprintf(s,CONFIG_VGA_BOOTARGS,"LDB-WVGA");
 #endif
