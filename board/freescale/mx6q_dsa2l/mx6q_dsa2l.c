@@ -2413,6 +2413,11 @@ int board_late_init(void)
 //		printf("%s\n",s);
 		setenv("bootargs", s);
 	}
+#ifdef CONFIG_ANDROID_PROGRAM_MAC
+	if (check_and_clean_program_mac_flag()) {
+		setenv("boot_abort", "1\0");
+	}
+#endif	//CONFIG_ANDROID_PROGRAM_MAC
 #endif
 	return 0;
 }

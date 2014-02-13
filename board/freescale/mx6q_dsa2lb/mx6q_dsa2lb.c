@@ -2035,7 +2035,6 @@ int check_recovery_cmd_file(void)
 
 int board_late_init(void)
 {
-	char s[256];
 //	int ret = 0;
 #ifdef MX6Q_SABRESD_ANDROID_H
 	switch (get_boot_device()) {
@@ -2078,6 +2077,11 @@ int board_late_init(void)
 		setenv("bootargs", CONFIG_HDMI_BOOTARGS);
 	else
 		setenv("bootargs", CONFIG_LVDS_BOOTARGS);
+#ifdef CONFIG_ANDROID_PROGRAM_MAC
+	if (check_and_clean_program_mac_flag()) {
+		setenv("boot_abort", "1\0");
+	}
+#endif	//CONFIG_ANDROID_PROGRAM_MAC
 #endif
 	return 0;
 }
