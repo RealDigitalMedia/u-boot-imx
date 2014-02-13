@@ -1190,6 +1190,26 @@ void set_usboh3_clk(void)
 }
 #endif
 
+#ifdef CONFIG_ANDROID_PROGRAM_MAC
+#define ANDROID_PROGRAM_MAC		(1 << 9)
+int check_and_clean_program_mac_flag(void)
+{
+	int flag_set = 0;
+	u32 reg;
+	reg = readl(SNVS_BASE_ADDR + SNVS_LPGPR);
+
+	flag_set = !!(reg & ANDROID_PROGRAM_MAC);
+
+	/* clean it in case looping infinite here.... */
+	if (flag_set) {
+		reg &= ~ANDROID_PROGRAM_MAC;
+		writel(reg, SNVS_BASE_ADDR + SNVS_LPGPR);
+	}
+
+	return flag_set;
+}
+#endif
+
 #ifdef CONFIG_ANDROID_RECOVERY
 #define ANDROID_RECOVERY_BOOT  (1 << 7)
 /* check if the recovery bit is set by kernel, it can be set by kernel

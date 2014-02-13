@@ -281,7 +281,7 @@ void main_loop (void)
 #endif
 
 #if defined(CONFIG_BOOTDELAY) && (CONFIG_BOOTDELAY >= 0)
-	char *s;
+	char *s, *c;
 	int bootdelay;
 #endif
 #ifdef CONFIG_PREBOOT
@@ -396,8 +396,12 @@ void main_loop (void)
 		s = getenv ("bootcmd");
 
 	debug ("### main_loop: bootcmd=\"%s\"\n", s ? s : "<UNDEFINED>");
-
-	if (bootdelay >= 0 && s && !abortboot (bootdelay)) {
+#ifdef CONFIG_ANDROID_PROGRAM_MAC
+	c = getenv("boot_abort");
+	if (bootdelay >= 0 && s && !abortboot (bootdelay) && !c) {
+#else
+		if (bootdelay >= 0 && s && !abortboot (bootdelay)) {
+#endif
 # ifdef CONFIG_AUTOBOOT_KEYED
 		int prev = disable_ctrlc(1);	/* disable Control C checking */
 # endif

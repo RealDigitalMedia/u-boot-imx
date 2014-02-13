@@ -29,5 +29,5 @@ struct reco_envs {
 
 int check_and_clean_recovery_flag(void);
 void check_recovery_mode(void);
-
+int check_and_clean_program_mac_flag(void);
 #endif
