@@ -1864,8 +1864,8 @@ void lcd_enable(void)
 			writel(0x40C, IOMUXC_BASE_ADDR + 0x8);
 			break;
 		case 2:
-			writel(0x61D, IOMUXC_BASE_ADDR + 0x8);
-//			writel(0x6BD, IOMUXC_BASE_ADDR + 0x8);
+//			writel(0x61D, IOMUXC_BASE_ADDR + 0x8);
+			writel(0x6BD, IOMUXC_BASE_ADDR + 0x8);
 			break;
 	}
 }
