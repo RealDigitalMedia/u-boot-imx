@@ -2035,6 +2035,8 @@ int check_recovery_cmd_file(void)
 
 int board_late_init(void)
 {
+	char s[256], *c;
+
 //	int ret = 0;
 #ifdef MX6Q_SABRESD_ANDROID_H
 	switch (get_boot_device()) {
@@ -2073,10 +2075,16 @@ int board_late_init(void)
 	setup_pmic_voltages();
 	set_i2c_host(CONFIG_SYS_I2C_PORT);
 
-	if (gpio_get_value(LVDS_MODE) != 1)
-		setenv("bootargs", CONFIG_HDMI_BOOTARGS);
-	else
-		setenv("bootargs", CONFIG_LVDS_BOOTARGS);
+	c = getenv("ethaddr");
+
+	if (gpio_get_value(LVDS_MODE) != 1) {
+		sprintf(s,CONFIG_HDMI_BOOTARGS, c);
+		setenv("bootargs", s);
+	} else {
+		sprintf(s,CONFIG_LVDS_BOOTARGS, c);
+		setenv("bootargs", s);
+	}
+
 #ifdef CONFIG_ANDROID_PROGRAM_MAC
 	if (check_and_clean_program_mac_flag()) {
 		setenv("boot_abort", "1\0");

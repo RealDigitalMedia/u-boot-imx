@@ -79,8 +79,8 @@
 		"splashimage=0x30000000\0"				\
 		"splashpos=m,m\0"					\
 		"vga_rsl=11\0"				\
-		"lvds_num=0\0"
+		"lvds_num=2\0"
 #endif
 
-#define CONFIG_LVDS_BOOTARGS "console=ttymxc0,115200 androidboot.console=ttymxc0 androidboot.hardware=freescale init=/init vmalloc=400M video=mxcfb0:dev=ldb\0"
-#define CONFIG_HDMI_BOOTARGS "console=ttymxc0,115200 androidboot.console=ttymxc0 androidboot.hardware=freescale init=/init vmalloc=400M video=mxcfb0:dev=hdmi,1920x1080M@60,bpp=32\0"
+#define CONFIG_LVDS_BOOTARGS "console=ttymxc0,115200 androidboot.console=ttymxc0 androidboot.hardware=freescale init=/init vmalloc=400M video=mxcfb0:dev=ldb mac=%s\0"
+#define CONFIG_HDMI_BOOTARGS "console=ttymxc0,115200 androidboot.console=ttymxc0 androidboot.hardware=freescale init=/init vmalloc=400M video=mxcfb0:dev=hdmi,1920x1080M@60,bpp=32 mac=%s\0"

@@ -2354,7 +2354,7 @@ int check_recovery_cmd_file(void)
 
 int board_late_init(void)
 {
-	char s[256];
+	char s[256], *c;
 //	int ret = 0;
 #ifdef MX6Q_SABRESD_ANDROID_H
 	switch (get_boot_device()) {
@@ -2397,18 +2397,20 @@ int board_late_init(void)
 	set_i2c_host(CONFIG_SYS_I2C_PORT);
 #endif //CONFIG_INIT_CH7036
 
+	c = getenv("ethaddr");
+
 	if (gpio_get_value(VGA_PORT_STATUS) != 1) {
 		if (pT) {
 #if defined(CONFIG_LVDS16_9_1366X768)
-			sprintf(s,CONFIG_VGA_BOOTARGS,"LDB-WXGA");
+			sprintf(s,CONFIG_VGA_BOOTARGS,"LDB-WXGA", c);
 #elif defined(CONFIG_LVDS16_9_1280X800)
-			sprintf(s,CONFIG_VGA_BOOTARGS,"VIC-WXGA");
+			sprintf(s,CONFIG_VGA_BOOTARGS,"VIC-WXGA", c);
 #else
-			sprintf(s,CONFIG_VGA_BOOTARGS,"LDB-WVGA");
+			sprintf(s,CONFIG_VGA_BOOTARGS,"LDB-WVGA", c);
 #endif
 		}
 		else {
-			sprintf(s,CONFIG_VGA_BOOTARGS,"LDB-XGA");
+			sprintf(s,CONFIG_VGA_BOOTARGS,"LDB-XGA", c);
 		}
 //		printf("%s\n",s);
 		setenv("bootargs", s);
