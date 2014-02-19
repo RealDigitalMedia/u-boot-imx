@@ -140,7 +140,7 @@ static struct fb_videomode lvds_wvga = {
 	"WVGA", 60, 800, 480, 31253, 156, 40, 8, 7, 60, 10,
 #endif
 #ifdef CONFIG_LVDS16_9_1366X768
-	"WVGA", 60, 1366, 768, 13255, 64, 32, 12, 6, 98, 20,	// 76M
+	"WVGA", 60, 1366, 768, 13255, 54, 42, 12, 6, 98, 20,	// 76M
 //	"WVGA", 52, 1366, 768, 15594, 64, 32, 12, 6, 98, 20,	// 65M
 #endif
 #ifdef CONFIG_LVDS16_9_1280X800
@@ -1226,6 +1226,11 @@ static int setup_ch7036(void) {
 //    i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x08, 1, &value, 1);
     value = 0x46;
     i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x68, 1, &value, 1);
+#ifdef CONFIG_LVDS16_9_1366X768
+    i2c_read(CONFIG_CH7036_I2C_SLAVE, 0x6A, 1, &value, 1);
+    value &= ~(0x01);
+    i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x6A, 1, &value, 1);
+#endif
 //    value = 0x45;
 //    i2c_write(CONFIG_CH7036_I2C_SLAVE, 0x6A, 1, &value, 1);
 //    value = 0xA8;
