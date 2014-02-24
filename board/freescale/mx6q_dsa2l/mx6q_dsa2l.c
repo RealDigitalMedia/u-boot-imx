@@ -2359,7 +2359,8 @@ int check_recovery_cmd_file(void)
 
 int board_late_init(void)
 {
-	char s[256], *c;
+	char s[256], *c, p[18];
+	int i,j;
 //	int ret = 0;
 #ifdef MX6Q_SABRESD_ANDROID_H
 	switch (get_boot_device()) {
@@ -2402,6 +2403,19 @@ int board_late_init(void)
 	set_i2c_host(CONFIG_SYS_I2C_PORT);
 #endif //CONFIG_INIT_CH7036
 
+	c = getenv("mac");
+	if (c) {
+		if (strlen(c) == 12) {
+			for (i=0,j=0;i <= 12;i++,j++) {
+				p[j] = *(c + i);
+				if (((i+1)%2 == 0) && ((i+1) < 12)) {
+					j++;
+					p[j] = ':';
+				}
+			}
+			setenv("ethaddr", p);
+		}
+	}
 	c = getenv("ethaddr");
 
 	if (gpio_get_value(VGA_PORT_STATUS) != 1) {
@@ -2418,8 +2432,11 @@ int board_late_init(void)
 			sprintf(s,CONFIG_VGA_BOOTARGS,"LDB-XGA", c);
 		}
 //		printf("%s\n",s);
-		setenv("bootargs", s);
+//		setenv("bootargs", s);
+	} else {
+		sprintf(s,CONFIG_HDMI_BOOTARGS, c);
 	}
+		setenv("bootargs", s);
 #ifdef CONFIG_ANDROID_PROGRAM_MAC
 	if (check_and_clean_program_mac_flag()) {
 		setenv("boot_abort", "1\0");
