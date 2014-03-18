@@ -193,6 +193,25 @@ int _do_setenv (int flag, int argc, char *argv[])
 		return 1;
 	}
 
+	if ((strcmp(name ,"mac") == 0) && (argc != 2)) {
+		//check whether the mac addr is legal
+		if (strlen(argv[2]) != 12) {
+			printf("## Error: illegal MAC address !\n\n");
+			return 1;
+		}
+		for (i = 0;i < 12;i++) {
+//			printf("char = %c", *(argv[2]+i));
+			if ((*(argv[2]+i) < '0' || *(argv[2]+i) > '9')) {
+				if ((*(argv[2]+i) < 'a' || *(argv[2]+i) > 'f')) {
+					if ((*(argv[2]+i) < 'A' || *(argv[2]+i) > 'F')) {
+						printf ("## Error: illegal character = %c\n\n", *(argv[2]+i));
+						return 1;
+					}
+				}
+			}
+		}
+	}
+
 	env_id++;
 	/*
 	 * search if variable with this name already exists
