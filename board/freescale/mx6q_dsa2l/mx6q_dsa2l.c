@@ -91,6 +91,12 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+typedef struct {
+	char horizontal[10];
+	char vertical[10];
+	int isWidthScreen;
+}displayInfo;
+
 static enum boot_device boot_dev;
 
 #define GPIO_VOL_DN_KEY IMX_GPIO_NR(4, 15)
@@ -1101,26 +1107,30 @@ int findOutputIndex(void) {
 	return retVal;
 }
 
-int monitorIs16_9(void) {
+displayInfo getOutputDisplayInfo(void) {
 	u16 resH, resV;
 	u8 value;
 	double ratio;
+	displayInfo	di;
 
 	resH = 0;
 	i2c_read(VESA_DDC_ADDR, 0x38, 1, &value, 1);
 	resH |= value;
 	i2c_read(VESA_DDC_ADDR, 0x3a, 1, &value, 1);
 	resH |= ((value >> 4) << 8);
+	sprintf(di.horizontal , "%d", resH);
 
 	resV = 0;
 	i2c_read(VESA_DDC_ADDR, 0x3b, 1, &value, 1);
 	resV |= value;
 	i2c_read(VESA_DDC_ADDR, 0x3d, 1, &value, 1);
 	resV |= ((value >> 4) << 8);
+	sprintf(di.vertical, "%d", resV);
 
 	ratio = (double)resH/(double)resV;
 
-	return ratio >= 1.6 ? 1 : 0;
+	di.isWidthScreen = ratio >= 1.6 ? 1 : 0;
+	return di;
 }
 
 static int setup_ch7036(void) {
@@ -2197,6 +2207,7 @@ void setup_splash_image(void)
 {
 	char *s;
 	ulong addr;
+	displayInfo di;
 
 	mxc_iomux_v3_setup_pad(MX6X_IOMUX(PAD_SD3_DAT3__GPIO_7_7));
 	gpio_direction_input(VGA_PORT_STATUS);
@@ -2207,9 +2218,8 @@ void setup_splash_image(void)
 	if (gpio_get_value(VGA_PORT_STATUS) != 1) {
 		printf("VGA Monitor is attached!\n");
 		if (!i2c_probe(VESA_DDC_ADDR)) {
-			if (monitorIs16_9()) {
-				pT = 1;
-			}
+			di = getOutputDisplayInfo();
+			pT = di.isWidthScreen;
 		} else {
 			pT = 0;
 		}
@@ -2361,6 +2371,8 @@ int board_late_init(void)
 {
 	char s[256], *c, p[18];
 	int i,j;
+	displayInfo di;
+
 //	int ret = 0;
 #ifdef MX6Q_SABRESD_ANDROID_H
 	switch (get_boot_device()) {
@@ -2403,6 +2415,13 @@ int board_late_init(void)
 	set_i2c_host(CONFIG_SYS_I2C_PORT);
 #endif //CONFIG_INIT_CH7036
 
+	set_i2c_host(CONFIG_HDMI_I2C_PORT);
+	i2c_init(CONFIG_HDMI_I2C_SPEED, CONFIG_HDMI_I2C_SLAVE);
+	setup_i2c(CONFIG_HDMI_I2C_PORT);
+	i2c_bus_recovery();
+	di = getOutputDisplayInfo();
+	set_i2c_host(CONFIG_SYS_I2C_PORT);
+
 	c = getenv("mac");
 	if (c) {
 		if (strlen(c) == 12) {
@@ -2421,20 +2440,20 @@ int board_late_init(void)
 	if (gpio_get_value(VGA_PORT_STATUS) != 1) {
 		if (pT) {
 #if defined(CONFIG_LVDS16_9_1366X768)
-			sprintf(s,CONFIG_VGA_BOOTARGS,"LDB-WXGA", c);
+			sprintf(s,CONFIG_VGA_BOOTARGS,"LDB-WXGA", di.horizontal, di.vertical, c);
 #elif defined(CONFIG_LVDS16_9_1280X800)
-			sprintf(s,CONFIG_VGA_BOOTARGS,"VIC-WXGA", c);
+			sprintf(s,CONFIG_VGA_BOOTARGS,"VIC-WXGA", di.horizontal, di.vertical, c);
 #else
-			sprintf(s,CONFIG_VGA_BOOTARGS,"LDB-WVGA", c);
+			sprintf(s,CONFIG_VGA_BOOTARGS,"LDB-WVGA", di.horizontal, di.vertical, c);
 #endif
 		}
 		else {
-			sprintf(s,CONFIG_VGA_BOOTARGS,"LDB-XGA", c);
+			sprintf(s,CONFIG_VGA_BOOTARGS,"LDB-XGA", di.horizontal, di.vertical, c);
 		}
 //		printf("%s\n",s);
 //		setenv("bootargs", s);
 	} else {
-		sprintf(s,CONFIG_HDMI_BOOTARGS, c);
+		sprintf(s,CONFIG_HDMI_BOOTARGS, di.horizontal, di.vertical, c);
 	}
 		setenv("bootargs", s);
 #ifdef CONFIG_ANDROID_PROGRAM_MAC

@@ -225,6 +225,10 @@
 	#define CONFIG_PMIC_I2C_PORT			I2C3_BASE_ADDR
 	#define CONFIG_PMIC_I2C_SPEED          100000
 	#define CONFIG_PMIC_I2C_SLAVE          (0x68 >> 1)
+
+	#define CONFIG_HDMI_I2C_PORT			I2C2_BASE_ADDR
+	#define CONFIG_HDMI_I2C_SPEED          100000
+	#define CONFIG_HDMI_I2C_SLAVE          (0x50 >> 1)
 #endif
 
 /*
