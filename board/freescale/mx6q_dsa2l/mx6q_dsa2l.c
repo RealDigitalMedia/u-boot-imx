@@ -2419,7 +2419,12 @@ int board_late_init(void)
 	i2c_init(CONFIG_HDMI_I2C_SPEED, CONFIG_HDMI_I2C_SLAVE);
 	setup_i2c(CONFIG_HDMI_I2C_PORT);
 	i2c_bus_recovery();
-	di = getOutputDisplayInfo();
+	if (!i2c_probe(VESA_DDC_ADDR)) {
+		di = getOutputDisplayInfo();
+	} else {
+		sprintf(di.horizontal, "%d", 1920);
+		sprintf(di.vertical, "%d", 1080);
+	}
 	set_i2c_host(CONFIG_SYS_I2C_PORT);
 
 	c = getenv("mac");
