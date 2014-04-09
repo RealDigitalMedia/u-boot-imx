@@ -3425,6 +3425,14 @@ mx6q_dsa2lb_iram_config	: unconfig
 		}
 	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 mx6q_dsa2lb freescale mx6
 
+mx6dl_dsa2lv_android_config		\
+mx6q_dsa2lv_iram_config	: unconfig
+	@[ -z "$(findstring iram_,$@)" ] || \
+		{ echo "TEXT_BASE = 0x00907000" >$(obj)board/freescale/mx6q_dsa2lv/config.tmp ; \
+		  echo "... with iram configuration" ; \
+		}
+	@$(MKCONFIG) $(@:_config=) arm arm_cortexa8 mx6q_dsa2lv freescale mx6
+
 omap2420h4_config	: unconfig
 	@$(MKCONFIG) $(@:_config=) arm arm1136 omap2420h4 NULL omap24xx
 
