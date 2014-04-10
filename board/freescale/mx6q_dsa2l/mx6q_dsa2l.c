@@ -2421,6 +2421,14 @@ int board_late_init(void)
 	i2c_bus_recovery();
 	if (!i2c_probe(VESA_DDC_ADDR)) {
 		di = getOutputDisplayInfo();
+		i = simple_strtoul(di.vertical, NULL, 16);
+		if ( i < 1000 ) {
+			sprintf(di.horizontal, "%d", 1280);
+			sprintf(di.vertical, "%d", 720);
+		} else {
+			sprintf(di.horizontal, "%d", 1920);
+			sprintf(di.vertical, "%d", 1080);
+		}
 	} else {
 		sprintf(di.horizontal, "%d", 1920);
 		sprintf(di.vertical, "%d", 1080);
