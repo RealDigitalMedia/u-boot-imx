@@ -112,7 +112,7 @@ unsigned short colormap[16777216];
 #endif
 
 static struct pwm_device pwm0 = {
-	.pwm_id = 0,
+	.pwm_id = 1,
 	.pwmo_invert = 0,
 };
 
@@ -1909,11 +1909,11 @@ void init_dsa2lv_gpio(void) {
 		MX6DL_PAD_SD3_CMD__GPIO_7_2,	//LED_GREEN
 		MX6DL_PAD_SD3_CLK__GPIO_7_3,	//LED_RED
 		MX6DL_PAD_SD3_DAT0__GPIO_7_4,	//WIFI_DISABLE
-		MX6DL_PAD_ENET_TX_D1__GPIO_1_29,	//eMMC_RSTn (Reset eMMC)
+		MX6DL_PAD_ENET_TXD1__GPIO_1_29,	//eMMC_RSTn (Reset eMMC)
 //		MX6DL_PAD_GPIO_1__PWM2_PWMO,	//DISP0_PWM
 		MX6DL_PAD_GPIO_5__GPIO_1_5,	//SW_SHUTDOWNn
 		MX6DL_PAD_GPIO_9__GPIO_1_9,	//PMIC_RESETn_C (Reset PMIC)
-		MX6DL_PAD_GPIO_7__GPIO_1_7,	//LVDS_PWR_EN
+		MX6DL_PAD_GPIO_19__GPIO_4_5,	//LVDS_PWR_EN
 
 //		MX6DL_PAD_GPIO_1__GPIO_1_1,	//RSTn_CH (Reset CH7036)
 //		MX6DL_PAD_GPIO_5__GPIO_1_5,	//GPIO_nRST (Reset PMIC GPIO)
@@ -1961,7 +1961,7 @@ void init_dsa2lv_gpio(void) {
 	gpio_direction_output(IMX_GPIO_NR(1, 9), 1);	//no reset PMIC
 
 //	gpio_direction_output(IMX_GPIO_NR(4, 10), 1);	//no SPI reset
-	gpio_direction_output(IMX_GPIO_NR(1, 7), 1);	//LVDS_PWR_EN on
+	gpio_direction_output(IMX_GPIO_NR(4, 5), 1);	//LVDS_PWR_EN on
 }
 
 int board_init(void)
