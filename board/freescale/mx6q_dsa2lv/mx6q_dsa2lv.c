@@ -1569,9 +1569,6 @@ void lcd_enable(void)
 	int ret;
 	unsigned int reg;
 
-	if (gpio_get_value(LVDS_MODE) != 1)
-		return;
-
 	s = getenv("lvds_num");
 	di = simple_strtol(s, NULL, 10);
 
@@ -1631,6 +1628,20 @@ void lcd_enable(void)
 	reg = readl(GPIO6_BASE_ADDR + GPIO_DR);
 	reg &= ~(1 << 16);
 	writel(reg, GPIO6_BASE_ADDR + GPIO_DR);
+
+	if (gpio_get_value(LVDS_MODE) != 1) {
+		imx_pwm_config(pwm0, 0, 50000);	// turn of pwm
+		imx_pwm_enable(pwm0);
+
+		// disable cable
+		reg = readl(GPIO6_BASE_ADDR + GPIO_DR);
+		reg &= ~(1 << 15);
+//		reg |= (1 << 15);
+		writel(reg, GPIO6_BASE_ADDR + GPIO_DR);
+
+		gpio_direction_output(IMX_GPIO_NR(4, 5), 1);	//LVDS_PWR_EN off
+		return;
+	}
 
 	/* Disable ipu1_clk/ipu1_di_clk_x/ldb_dix_clk. */
 	reg = readl(CCM_BASE_ADDR + CLKCTL_CCGR3);
