@@ -2058,7 +2058,13 @@ int board_late_init(void)
 	switch (get_boot_device()) {
 	case SD_BOOT:
 		setenv("fastboot_dev", "mmc1");
-		setenv("bootcmd", "booti mmc1");
+		//		setenv("bootcmd", "booti mmc1");
+		setenv("loaduimage", "fatload mmc 1:1 ${loadaddr} neocast/current/vmlinuz");
+		setenv("loadinitrd", "fatload mmc 1:1 ${rd_loadaddr} neocast/current/initrd");
+		setenv("rdmBA", "console=ttymxc0,115200 vmalloc=400M video=mxcfb0:dev=hdmi,1920x1080M@60,bpp=32 rw rootwait root=");
+		setenv("rdm", "run loaduimage loadinitrd; setenv bootargs ${rdmBA}${root}; bootm ${loadaddr} ${rd_loadaddr}");
+		setenv("root", "/dev/mmcblk0p1");
+		setenv("bootcmd", "run rdm");
 		break;
 	case MMC_BOOT:
 		setenv("fastboot_dev", "mmc3");
