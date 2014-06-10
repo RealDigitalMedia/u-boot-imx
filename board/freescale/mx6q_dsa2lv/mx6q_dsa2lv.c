@@ -1636,10 +1636,9 @@ void lcd_enable(void)
 		// disable cable
 		reg = readl(GPIO6_BASE_ADDR + GPIO_DR);
 		reg &= ~(1 << 15);
-//		reg |= (1 << 15);
 		writel(reg, GPIO6_BASE_ADDR + GPIO_DR);
 
-		gpio_direction_output(IMX_GPIO_NR(4, 5), 1);	//LVDS_PWR_EN off
+		gpio_direction_output(IMX_GPIO_NR(4, 5), 0);	//LVDS_PWR_EN off
 		return;
 	}
 
